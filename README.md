@@ -37,35 +37,9 @@ The system reads three sensors (temperature, pressure, vibration), evaluates the
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    ESP32-S3 (Rust no_std)                    │
-│                                                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
-│  │ Temp (°C)│  │Press(hPa)│  │ Vib(arb) │  ← 3 Sensors     │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘                  │
-│       │              │              │                        │
-│       └──────────────┼──────────────┘                        │
-│                      ▼                                       │
-│         ┌────────────────────────┐                           │
-│         │  Voting Redundancy     │                           │
-│         │  (≥2 anomalies = FAULT)│                           │
-│         └───────────┬────────────┘                           │
-│                     ▼                                        │
-│  ┌──────────────────────────────────────┐                    │
-│  │  Mutex<RefCell<SystemState>>         │  ← Thread-Safe     │
-│  │  via critical_section::with()       │     Shared State    │
-│  └──────────────────┬───────────────────┘                    │
-│                     ▼                                        │
-│         ┌────────────────────────┐                           │
-│         │  Fail-Safe Actuator    │                           │
-│         │  + Lockout (2000ms)    │  → GPIO2 (Valve LED)      │
-│         └────────────────────────┘    GPIO4 (Normal LED)     │
-│                                       GPIO5 (Lockout LED)    │
-│                                                             │
-│  TIMG0 (80MHz APB) → µs-precision latency measurement       │
-└─────────────────────────────────────────────────────────────┘
-```
+![Architecture Diagram](docs/architecture_diagram.png)
+
+*Figure 1: Safe-concurrency system architecture design on ESP32-S3.*
 
 ---
 
@@ -95,21 +69,11 @@ The system reads three sensors (temperature, pressure, vibration), evaluates the
 | GPIO5 | Lockout LED (Yellow) | 220Ω + LED-YELLOW | Active-High: ON = lockout active |
 | GPIO15 | Fault Button | Push-button + 10kΩ pull-down | Press = inject fault |
 
-### Wiring Diagram (Proteus)
+### Wiring Reference
 
-```
-                      ┌──────────────────────────────────┐
-                      │ ESP32-S3                          │
-VTX RXD ──────────────┤  GPIO1 (TX0)                      │
-                      │  GPIO2 ──[220Ω]──LED-RED──GND     │
-                      │  GPIO4 ──[220Ω]──LED-GRN──GND     │
-                      │  GPIO5 ──[220Ω]──LED-YLW──GND     │
-     +3.3V ──[BUTTON]──┤  GPIO15                           │
-                │       └──────────────────────────────────┘
-              [10kΩ]
-                │
-               GND
-```
+![Wiring Reference](docs/wiring_reference.png)
+
+*Figure 2: Proteus schematic wiring diagram for ESP32-S3.*
 
 ---
 
@@ -198,6 +162,23 @@ iteration  temp  press  vib  latency_us  status
 6 99 1013 9999 0 2  # LOCKOUT_ACTIVE (1500ms)
 9 25 1013 5 0 3  # LOCKOUT_CLEARED
 ```
+
+### GNUPlot Visualizations
+
+#### 1. Multi-Sensor Fusion Overview (3-Panel Plot)
+![Sensor Fusion Analysis](docs/sensor_fusion_analysis.png)
+
+#### 2. Detailed Fault Detection Latency Analysis
+![Latency Analysis](docs/latency_analysis.png)
+
+#### 3. System State Timeline (Color-Coded Regions)
+![State Timeline](docs/state_timeline.png)
+
+#### 4. Voting Decision Matrix Heatmap (All Text Light)
+![Voting Heatmap](docs/voting_heatmap.png)
+
+#### 5. Method Comparison vs. Literature
+![Method Comparison](docs/method_comparison.png)
 
 ---
 
