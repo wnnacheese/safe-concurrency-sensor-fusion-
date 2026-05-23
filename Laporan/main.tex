@@ -236,11 +236,11 @@ Berikut adalah \textit{future work} dari masing-masing 25 jurnal acuan:
 
 \noindent\textbf{Sintesis:} Dari 25 tema \textit{future work} di atas, kami mengidentifikasi celah riset yang belum pernah diuji coba secara terintegrasi: \textbf{penggunaan fitur safe-concurrency Rust untuk mengimplementasikan voting-based multi-sensor fusion dengan hardware-timed fail-safe actuator pada bare-metal ESP32-S3}. Kombinasi ini memadukan:
 \begin{itemize}
-  \item FW12 --- hardware-software co-design fault-tolerant fusion
-  \item FW17 --- real-time embedded fault detection pada MCU
-  \item FW18/FW23 --- Rust memory-safety dan unsafe reduction
-  \item FW21 --- low-latency interrupt handling pada Rust embedded OS
-  \item FW24 --- Rust performance pada ESP32
+  \item FW12 : hardware-software co-design fault-tolerant fusion
+  \item FW17 : real-time embedded fault detection pada MCU
+  \item FW18/FW23 : Rust memory-safety dan unsafe reduction
+  \item FW21 : low-latency interrupt handling pada Rust embedded OS
+  \item FW24 : Rust performance pada ESP32
 \end{itemize}
 
 \newpage
@@ -334,12 +334,12 @@ GPIO15 & Input Digital & Push-button + 10k$\Omega$ pull-down & Fault injection \
 
 \noindent Komponen lengkap rangkaian:
 \begin{enumerate}
-  \item \textbf{ESP32-S3} (kategori MicroPython di Proteus) — mikrokontroler utama.
-  \item \textbf{LED Merah} (D1) pada GPIO2 dengan resistor 220$\Omega$ — indikator valve tertutup saat fault.
-  \item \textbf{LED Hijau} (D2) pada GPIO4 dengan resistor 220$\Omega$ — indikator sistem beroperasi normal.
-  \item \textbf{LED Kuning} (D3) pada GPIO5 dengan resistor 220$\Omega$ — indikator periode lockout aktif.
-  \item \textbf{Push-button} pada GPIO15 dengan pull-down 10k$\Omega$ — tombol fault injection. Saat ditekan, sensor suhu diinjeksi ke 99$^\circ$C dan vibrasi ke 9999 (melebihi threshold), memicu deteksi fault melalui mekanisme voting.
-  \item \textbf{Virtual Terminal} pada TX0 (GPIO1) — monitor output serial UART (115200 baud, format CSV 6 kolom).
+  \item \textbf{ESP32-S3} (kategori MicroPython di Proteus) : mikrokontroler utama.
+  \item \textbf{LED Merah} (D1) pada GPIO2 dengan resistor 220$\Omega$ : indikator valve tertutup saat fault.
+  \item \textbf{LED Hijau} (D2) pada GPIO4 dengan resistor 220$\Omega$ : indikator sistem beroperasi normal.
+  \item \textbf{LED Kuning} (D3) pada GPIO5 dengan resistor 220$\Omega$ : indikator periode lockout aktif.
+  \item \textbf{Push-button} pada GPIO15 dengan pull-down 10k$\Omega$ : tombol fault injection. Saat ditekan, sensor suhu diinjeksi ke 99$^\circ$C dan vibrasi ke 9999 (melebihi threshold), memicu deteksi fault melalui mekanisme voting.
+  \item \textbf{Virtual Terminal} pada TX0 (GPIO1) : monitor output serial UART (115200 baud, format CSV 6 kolom).
 \end{enumerate}
 
 \begin{figure}[H]
@@ -413,6 +413,8 @@ fn evaluate_sensor_redundancy(temp: u32, press: u32, vib: u32)
 }
 \end{lstlisting}
 
+\vspace{2cm}
+
 \subsection{Data dan Plot GNUPlot}
 
 Data hasil simulasi direkam langsung dari output Virtual Terminal Proteus dalam format CSV 6 kolom (\texttt{iter, temp, press, vib, latency\_us, status}) dan diplot menggunakan GNUPlot. Tiga panel visualisasi dihasilkan:
@@ -429,6 +431,8 @@ Data hasil simulasi direkam langsung dari output Virtual Terminal Proteus dalam 
   \caption{Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari Virtual Terminal Proteus.}
   \label{fig:gnuplot}
 \end{figure}
+
+\vspace{3cm}
 
 \subsection{Analisis Kuantitatif}
 
@@ -465,6 +469,8 @@ Interval polling & 500 ms \\
 
 \noindent\textbf{Perbandingan dengan literatur:}
 Sistem J14 (Desikan et al., 2025) menggunakan dynamic threshold tanpa mekanisme lockout, sehingga rentan terhadap valve bounce. Sistem J21 (Radovici et al., 2022) mencapai latensi interrupt 3$\times$ lebih cepat menggunakan Rust, namun tidak mengimplementasikan mekanisme sensor fusion. Metode kami menggabungkan kedua keunggulan tersebut: respons aktuator cepat \textit{dan} voting-based redundancy, dalam satu sistem terintegrasi.
+
+\vspace{4cm}
 
 \subsection{Visualisasi Lanjutan}
 
@@ -590,6 +596,8 @@ Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Ru
 
 \end{enumerate}
 
+\vspace{4cm}
+
 
 % ═══════════════════════════════════════════════════════════════════════════════
 \section{Dokumentasi GitHub dan LinkedIn}
@@ -598,29 +606,29 @@ Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Ru
 % sections/github_linkedin.tex — Dokumentasi GitHub dan LinkedIn
 
 \noindent\textbf{Tautan Repositori GitHub:}\\
-\url{https://github.com/wnnacheese/safe-concurrency-sensor-fusion-}
+\url{https://github.com/wnnacheese/safe-concurrency-sensor-fusion-/tree/main}
 
 \noindent\textbf{Unggahan LinkedIn:}\\
-\url{https://www.linkedin.com/feed/update/[ID_POST]}
+\url{www.linkedin.com/in/abdurraufalmutawakkil}
 
 \vspace{0.5cm}
 \noindent Repositori GitHub memuat:
 \begin{itemize}
-  \item \texttt{README.md} dalam bahasa Inggris
+  \item \texttt{README.md}
   \item Source code Rust (\texttt{Rust\_Proteus\_Simulation/src/main.rs}, \texttt{Cargo.toml})
-  \item Port MicroPython untuk simulasi Proteus (\texttt{Proteus\_Arduino\_Simulation/main.py})
+  \item Port MicroPython untuk simulasi Proteus (\texttt{ProteusSimulation/main.py})
   \item Script GNUPlot (\texttt{plot.plt}) dan data simulasi (\texttt{simulation\_data.dat})
-  \item Panduan wiring skematik Proteus (\texttt{PROTEUS\_SCHEMATIC\_GUIDE.md})
   \item Laporan PDF (\texttt{Laporan/main.tex})
 \end{itemize}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{linkedin_post.png}
+  \includegraphics[width=0.5\textwidth]{linkedin_post.png}
   \caption{Bukti publikasi LinkedIn dengan tagar \texttt{\#teknikInstrumentasi}.}
   \label{fig:linkedin}
 \end{figure}
 
+\vspace{2cm}
 
 % ═══════════════════════════════════════════════════════════════════════════════
 \section{Kesimpulan}
