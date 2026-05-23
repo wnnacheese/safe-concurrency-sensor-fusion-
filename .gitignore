@@ -1,0 +1,41 @@
+# ══════════════════════════════════════════════════
+# Rust build artifacts
+# ══════════════════════════════════════════════════
+Rust_Proteus_Simulation/target/
+
+# ══════════════════════════════════════════════════
+# Proteus temporary files
+# ══════════════════════════════════════════════════
+*.SDF
+*.bak
+*.log
+*.pdsprj.lck
+*.pdsprj.WNNACH*
+Debug/
+
+# ══════════════════════════════════════════════════
+# Arduino build artifacts
+# ══════════════════════════════════════════════════
+Proteus_Arduino_Simulation/safe_concurrency_sensor_fusion/build/
+*.hex
+
+# ══════════════════════════════════════════════════
+# LaTeX build artifacts
+# ══════════════════════════════════════════════════
+Laporan/*.aux
+Laporan/*.log
+Laporan/*.out
+Laporan/*.toc
+Laporan/*.fls
+Laporan/*.fdb_latexmk
+Laporan/*.synctex.gz
+Laporan/*.pdf
+
+# ══════════════════════════════════════════════════
+# OS & IDE files
+# ══════════════════════════════════════════════════
+Thumbs.db
+.DS_Store
+desktop.ini
+.vscode/
+.idea/

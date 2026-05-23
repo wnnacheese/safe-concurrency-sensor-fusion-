@@ -1,0 +1,23 @@
+[package]
+name = "safe-concurrency-sensor-fusion"
+version = "0.1.0"
+edition = "2021"
+authors = ["ETS PemKom Team"]
+description = "Safe-Concurrency Multi-Sensor Fusion for Industrial Safety-Critical Systems on ESP32"
+
+[dependencies]
+esp-hal = { version = "0.22.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.15.0", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.13.0", features = ["esp32s3", "uart"] }
+critical-section = "1.2.0"
+
+[profile.dev]
+opt-level = "s"        # Optimize for size in development
+debug = true
+
+[profile.release]
+opt-level = "s"        # Optimize for size
+lto = "fat"            # Link-Time Optimization for minimal binary
+codegen-units = 1      # Single codegen unit for better optimization
+debug = false
+strip = true
