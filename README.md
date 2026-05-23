@@ -97,7 +97,6 @@ The system reads three sensors (temperature, pressure, vibration), evaluates the
 │   └── *.png                    # Figures and screenshots
 │
 ├── Jurnal/                      # 25 Scopus/WoS references (2021-2026)
-├── PROTEUS_SCHEMATIC_GUIDE.md   # Step-by-step wiring guide
 └── README.md                    # This file
 ```
 
