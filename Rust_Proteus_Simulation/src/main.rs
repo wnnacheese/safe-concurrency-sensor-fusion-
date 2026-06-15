@@ -1,7 +1,7 @@
 //! # Safe-Concurrency Multi-Sensor Fusion for Industrial Safety-Critical Systems
 //! ============================================================================
 //! **Platform**  : ESP32-S3 (Xtensa LX7, dual-core, 240 MHz), bare-metal (`no_std`)
-//! **Toolchain** : Rust 2021 + `esp-hal` v0.22 (target: `xtensa-esp32s3-none-elf`)
+//! **Toolchain** : Rust 2021 + `esp-hal` v1.1.1 (target: `xtensa-esp32s3-none-elf`)
 //! **Simulator** : Proteus 8.17+ (ESP32-S3 MicroPython model + Virtual Terminal)
 //!
 //! ## Arsitektur Konkurensi
@@ -18,6 +18,14 @@
 //!   diizinkan dibuka kembali, mencegah fenomena *valve bounce* di lingkungan
 //!   industri nyata.
 //!
+//! ## N-Sensor Scalability (v3.0)
+//!
+//! - Jumlah sensor dikonfigurasi via [`N_SENSORS`]; ubah satu konstanta untuk
+//!   scaling dari 3 → N sensor tanpa menyentuh logika inti.
+//! - Voting quorum dihitung otomatis sebagai majority: `N_SENSORS / 2 + 1`
+//! - Threshold per-sensor disimpan dalam array konstanta: [`SENSOR_LOW`],
+//!   [`SENSOR_HIGH`], [`SENSOR_INITIAL`], [`SENSOR_NAMES`]
+//!
 //! ## Wiring (Active-High untuk semua LED)
 //!
 //! | GPIO | Fungsi | Komponen |
@@ -33,51 +41,117 @@
 
 use esp_backtrace as _;
 use esp_hal::{
-    clock::ClockControl,
-    gpio::Io,
-    peripherals::Peripherals,
-    prelude::*,
-    system::SystemControl,
+    main,
+    gpio::{Input, InputConfig, Level, Output, OutputConfig, Pull},
     timer::timg::TimerGroup,
+    delay::Delay,
+    timer::Timer,
+    rtc_cntl::{Rtc, sleep::TimerWakeupSource},
+    Config,
 };
 use core::cell::RefCell;
 use critical_section::Mutex;
-use esp_println::println;
+use esp_println::{print, println};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// KONSTANTA KONFIGURASI (Threshold & Timing)
+// KONFIGURASI N-SENSOR (ubah `N_SENSORS` + array dibawah untuk scaling)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Ambang batas suhu anomali (°C).
-/// Pembacaan di atas nilai ini mengindikasikan sensor suhu mengalami anomali.
-const TEMPERATURE_ANOMALY_THRESHOLD: u32 = 80;
+/// Jumlah sensor dalam array fusi.
+/// Harus ≥ 3 untuk majority voting yang bermakna.
+/// Voting quorum dihitung otomatis sebagai: `(N_SENSORS / 2) + 1`.
+///
+/// # Contoh scaling ke 5 sensor
+///
+/// ```ignore
+/// const N_SENSORS: usize = 5;
+/// const SENSOR_LOW:  [u32; 5] = [NO_THRESHOLD, 900, NO_THRESHOLD, 0,    NO_THRESHOLD];
+/// const SENSOR_HIGH: [u32; 5] = [80,           1200, 500,          100,  200          ];
+/// const SENSOR_INITIAL: [u32; 5] = [25, 1013, 5,  50, 100];
+/// const SENSOR_NAMES: [&str; 5] = ["TEMP", "PRESS", "VIB", "HUMID", "FLOW"];
+/// ```
+const N_SENSORS: usize = 3;
 
-/// Ambang batas tekanan minimum (hPa).
-/// Pembacaan di bawah nilai ini mengindikasikan sensor tekanan anomali rendah.
-const PRESSURE_MIN_THRESHOLD: u32 = 900;
+/// Voting quorum: jumlah minimum sensor anomali untuk deklarasi fault.
+/// Majority rule: ⌈N/2⌉ = floor(N/2) + 1.
+const VOTING_QUORUM: u32 = (N_SENSORS as u32 / 2) + 1;
 
-/// Ambang batas tekanan maksimum (hPa).
-/// Pembacaan di atas nilai ini mengindikasikan sensor tekanan anomali tinggi.
-const PRESSURE_MAX_THRESHOLD: u32 = 1200;
+/// Sentinel value: tidak ada threshold check pada arah ini.
+const NO_THRESHOLD: u32 = u32::MAX;
 
-/// Ambang batas vibrasi anomali (unit: arbitrary sensor reading).
-/// Pembacaan di atas nilai ini mengindikasikan sensor vibrasi anomali.
-const VIBRATION_ANOMALY_THRESHOLD: u32 = 500;
+/// Lower anomaly threshold per sensor.
+const SENSOR_LOW: [u32; N_SENSORS] = [
+    NO_THRESHOLD,  // [0] TEMP  — hanya check high-bound
+    900,           // [1] PRESS — anomali jika < 900 hPa
+    NO_THRESHOLD,  // [2] VIB   — hanya check high-bound
+];
 
-/// Jumlah minimum sensor anomali untuk mendeklarasikan fault.
-/// Menggunakan voting majority: ≥ 2 dari 3 sensor = fault (fail-safe trigger).
-const VOTING_QUORUM: u32 = 2;
+/// Upper anomaly threshold per sensor.
+const SENSOR_HIGH: [u32; N_SENSORS] = [
+    80,            // [0] TEMP  — anomali jika > 80°C
+    1200,          // [1] PRESS — anomali jika > 1200 hPa
+    500,           // [2] VIB   — anomali jika > 500 (arb.)
+];
 
-/// Durasi minimum valve harus tetap tertutup setelah deteksi anomali (ms).
-/// Ini mencegah valve "bounce" yang berbahaya di sistem industri nyata.
-const LOCKOUT_DURATION_MS: u32 = 2000;
+/// Nilai baseline / initial untuk tiap sensor (operasi normal).
+const SENSOR_INITIAL: [u32; N_SENSORS] = [
+    25,            // [0] TEMP  — suhu ruangan
+    1013,          // [1] PRESS — tekanan atmosfer standar
+    5,             // [2] VIB   — vibrasi baseline
+];
+
+/// Nama sensor untuk output serial (4-5 karakter, uppercase).
+const SENSOR_NAMES: [&str; N_SENSORS] = ["TEMP", "PRESS", "VIB"];
+
+/// Durasi lockout adaptif berdasarkan severity fault (ms).
+///
+/// - **Minor**: quorum terpenuhi tapi masih ada sensor normal → lockout pendek
+/// - **Critical**: semua N sensor anomali → lockout panjang (bahaya maksimum)
+const LOCKOUT_MINOR_MS: u32 = 500;
+const LOCKOUT_CRITICAL_MS: u32 = 2000;
 
 /// Interval sampling sensor (ms).
 const SENSOR_POLL_INTERVAL_MS: u32 = 500;
 
-/// Frekuensi APB clock ESP32-S3 dalam MHz — digunakan untuk konversi
-/// tick timer ke microsecond. APB clock default = 80 MHz.
-const APB_FREQ_MHZ: u64 = 80;
+// ─────────────────────────────────────────────────────────────────────────────
+// TIPE DATA: Fault Severity Classification
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Klasifikasi severity fault berdasarkan jumlah sensor anomali.
+#[derive(Debug, PartialEq)]
+enum FaultSeverity {
+    /// Quorum terpenuhi, tapi masih ada sensor yang normal (redundansi tersisa).
+    Minor,
+    /// Semua N sensor mendeteksi anomali — tidak ada redundansi tersisa.
+    Critical,
+}
+
+impl FaultSeverity {
+    /// Durasi lockout (ms) yang sesuai dengan severity.
+    const fn lockout_ms(&self) -> u32 {
+        match self {
+            FaultSeverity::Minor => LOCKOUT_MINOR_MS,
+            FaultSeverity::Critical => LOCKOUT_CRITICAL_MS,
+        }
+    }
+
+    /// Label untuk output serial.
+    const fn label(&self) -> &str {
+        match self {
+            FaultSeverity::Minor => "MINOR",
+            FaultSeverity::Critical => "CRITICAL",
+        }
+    }
+}
+
+/// Klasifikasi severity berdasarkan jumlah anomali vs N_SENSORS.
+fn classify_severity(anomaly_count: u32) -> FaultSeverity {
+    if anomaly_count >= N_SENSORS as u32 {
+        FaultSeverity::Critical
+    } else {
+        FaultSeverity::Minor
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED STATE (Thread-Safe via Mutex<RefCell<T>>)
@@ -86,30 +160,22 @@ const APB_FREQ_MHZ: u64 = 80;
 /// Representasi state sistem yang di-share antar konteks eksekusi.
 ///
 /// Dilindungi oleh [`critical_section::Mutex`] untuk mencegah data-race.
-/// Akses hanya boleh dilakukan di dalam blok [`critical_section::with()`].
 ///
 /// # Fields
-/// - `sensor_temp`: Pembacaan suhu terakhir (°C)
-/// - `sensor_press`: Pembacaan tekanan terakhir (hPa)
-/// - `sensor_vib`: Pembacaan vibrasi terakhir (arbitrary unit)
+/// - `sensor_values`: Array nilai sensor terbaru, indeks sesuai [`SENSOR_NAMES`]
 /// - `fault_active`: `true` jika sistem sedang dalam kondisi fault
 /// - `lockout_remaining_ms`: Sisa waktu lockout (ms), 0 jika tidak aktif
 #[derive(Debug)]
 struct SystemState {
-    sensor_temp: u32,
-    sensor_press: u32,
-    sensor_vib: u32,
+    sensor_values: [u32; N_SENSORS],
     fault_active: bool,
     lockout_remaining_ms: u32,
 }
 
-/// Default initial state: semua sensor dalam rentang normal, tidak ada fault.
 impl SystemState {
     const fn default() -> Self {
         Self {
-            sensor_temp: 25,
-            sensor_press: 1013,
-            sensor_vib: 5,
+            sensor_values: SENSOR_INITIAL,
             fault_active: false,
             lockout_remaining_ms: 0,
         }
@@ -117,7 +183,6 @@ impl SystemState {
 }
 
 /// Global shared state, dilindungi oleh critical-section Mutex.
-/// Akses thread-safe dijamin pada waktu kompilasi — zero runtime overhead.
 static STATE: Mutex<RefCell<SystemState>> =
     Mutex::new(RefCell::new(SystemState::default()));
 
@@ -125,50 +190,36 @@ static STATE: Mutex<RefCell<SystemState>> =
 // TIPE DATA: Hasil Evaluasi Sensor (Named Struct)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Hasil evaluasi voting-based redundancy check.
-///
-/// Menggunakan named struct (bukan bare tuple) untuk self-documenting API
-/// sesuai rekomendasi Rust idiom — meningkatkan keterbacaan di call site.
+/// Hasil evaluasi N-sensor voting-based redundancy check.
 #[derive(Debug)]
 struct FaultEvaluation {
-    /// `true` jika jumlah sensor anomali ≥ [`VOTING_QUORUM`] (fail-safe trigger)
     is_fault: bool,
-    /// Jumlah sensor yang mendeteksi anomali (0..=3)
     anomaly_count: u32,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FUNGSI: Voting-Based Redundancy Check
+// FUNGSI: N-Sensor Voting-Based Redundancy Check
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Evaluasi 3 sensor secara paralel-logis menggunakan voting majority.
+/// Evaluasi N sensor secara paralel-logis menggunakan voting majority.
 ///
-/// Setiap sensor diperiksa terhadap threshold masing-masing:
-/// - Suhu: `temp > TEMPERATURE_ANOMALY_THRESHOLD`
-/// - Tekanan: `press < PRESSURE_MIN_THRESHOLD || press > PRESSURE_MAX_THRESHOLD`
-/// - Vibrasi: `vib > VIBRATION_ANOMALY_THRESHOLD`
-///
-/// Jika jumlah sensor anomali ≥ [`VOTING_QUORUM`] (default: 2), maka fault
-/// dideklarasikan dan aktuator fail-safe harus diaktifkan.
-///
-/// # Arguments
-/// * `temp` - Pembacaan sensor suhu (°C)
-/// * `press` - Pembacaan sensor tekanan (hPa)
-/// * `vib` - Pembacaan sensor vibrasi (arbitrary unit)
-///
-/// # Returns
-/// [`FaultEvaluation`] berisi status fault dan jumlah anomali.
-fn evaluate_sensor_redundancy(temp: u32, press: u32, vib: u32) -> FaultEvaluation {
+/// Setiap sensor `i` diperiksa terhadap threshold:
+/// - Anomali jika `value < SENSOR_LOW[i]` DAN `SENSOR_LOW[i] != NO_THRESHOLD`
+/// - Anomali jika `value > SENSOR_HIGH[i]` DAN `SENSOR_HIGH[i] != NO_THRESHOLD`
+fn evaluate_sensor_redundancy(values: &[u32; N_SENSORS]) -> FaultEvaluation {
     let mut anomaly_count: u32 = 0;
 
-    if temp > TEMPERATURE_ANOMALY_THRESHOLD {
-        anomaly_count += 1;
-    }
-    if press < PRESSURE_MIN_THRESHOLD || press > PRESSURE_MAX_THRESHOLD {
-        anomaly_count += 1;
-    }
-    if vib > VIBRATION_ANOMALY_THRESHOLD {
-        anomaly_count += 1;
+    for i in 0..N_SENSORS {
+        let val = values[i];
+        let lo = SENSOR_LOW[i];
+        let hi = SENSOR_HIGH[i];
+
+        let is_anomaly = (lo != NO_THRESHOLD && val < lo)
+                      || (hi != NO_THRESHOLD && val > hi);
+
+        if is_anomaly {
+            anomaly_count += 1;
+        }
     }
 
     FaultEvaluation {
@@ -179,36 +230,69 @@ fn evaluate_sensor_redundancy(temp: u32, press: u32, vib: u32) -> FaultEvaluatio
 
 /// Update status 3 LED berdasarkan state sistem saat ini.
 ///
-/// Logika Active-High (konsisten dengan wiring Proteus):
-/// - **Fault aktif + lockout**: Merah ON, Hijau OFF, Kuning ON
-/// - **Fault aktif + no lockout**: Merah ON, Hijau OFF, Kuning OFF
+/// Logika Active-High:
+/// - **Fault + lockout**: Merah ON, Hijau OFF, Kuning ON
+/// - **Fault + no lockout**: Merah ON, Hijau OFF, Kuning OFF
 /// - **Normal**: Merah OFF, Hijau ON, Kuning OFF
-///
-/// # Arguments
-/// * `valve_led` - Pin output GPIO2 (LED Merah)
-/// * `normal_led` - Pin output GPIO4 (LED Hijau)
-/// * `lockout_led` - Pin output GPIO5 (LED Kuning)
-/// * `fault_active` - Status fault saat ini
-/// * `lockout_remaining` - Sisa waktu lockout (ms)
 fn update_leds(
-    valve_led: &mut impl esp_hal::gpio::OutputPin,
-    normal_led: &mut impl esp_hal::gpio::OutputPin,
-    lockout_led: &mut impl esp_hal::gpio::OutputPin,
+    valve_led: &mut Output<'_>,
+    normal_led: &mut Output<'_>,
+    lockout_led: &mut Output<'_>,
     fault_active: bool,
     lockout_remaining: u32,
 ) {
     if fault_active {
-        valve_led.set_high();    // Merah ON  = valve tertutup
-        normal_led.set_low();    // Hijau OFF
+        valve_led.set_high();     // Merah ON  = valve tertutup
+        normal_led.set_low();     // Hijau OFF
         if lockout_remaining > 0 {
-            lockout_led.set_high();  // Kuning ON = lockout aktif
+            lockout_led.set_high();   // Kuning ON = lockout
         } else {
             lockout_led.set_low();
         }
     } else {
-        valve_led.set_low();     // Merah OFF = valve terbuka (normal)
-        normal_led.set_high();   // Hijau ON  = sistem normal
-        lockout_led.set_low();   // Kuning OFF
+        valve_led.set_low();      // Merah OFF = normal
+        normal_led.set_high();    // Hijau ON  = normal
+        lockout_led.set_low();    // Kuning OFF
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS: Serial Output Formatting (N-Scalable)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Print CSV header.
+fn print_csv_header() {
+    print!("iter");
+    for i in 0..N_SENSORS {
+        print!(", {}", SENSOR_NAMES[i]);
+    }
+    println!(", latency_us, status");
+}
+
+/// Print CSV data row.
+fn print_data_row(iteration: u32, values: &[u32; N_SENSORS], latency_us: u64, status: &str) {
+    print!("{}", iteration);
+    for i in 0..N_SENSORS {
+        print!(", {}", values[i]);
+    }
+    println!(", {}, {}", latency_us, status);
+}
+
+/// Print sensor threshold configuration.
+fn print_sensor_config() {
+    for i in 0..N_SENSORS {
+        let lo = SENSOR_LOW[i];
+        let hi = SENSOR_HIGH[i];
+
+        if lo == NO_THRESHOLD && hi == NO_THRESHOLD {
+            println!("  [{}] {}: no threshold check", i, SENSOR_NAMES[i]);
+        } else if lo == NO_THRESHOLD {
+            println!("  [{}] {}: > {} → anomaly", i, SENSOR_NAMES[i], hi);
+        } else if hi == NO_THRESHOLD {
+            println!("  [{}] {}: < {} → anomaly", i, SENSOR_NAMES[i], lo);
+        } else {
+            println!("  [{}] {}: < {} or > {} → anomaly", i, SENSOR_NAMES[i], lo, hi);
+        }
     }
 }
 
@@ -216,158 +300,180 @@ fn update_leds(
 // ENTRY POINT
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[entry]
+#[main]
 fn main() -> ! {
-    // ── Hardware Initialization ──────────────────────────────────────────
-    let peripherals = Peripherals::take();
-    let system = SystemControl::new(peripherals.SYSTEM);
-    let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
-
-    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
+    // ── Hardware Initialization (esp-hal v1.x) ───────────────────────────
+    let peripherals = esp_hal::init(Config::default());
 
     // Actuator: Valve darurat pada GPIO2 (Active-High = LED merah)
-    let mut valve_led = io.pins.gpio2.into_push_pull_output();
+    let mut valve_led = Output::new(peripherals.GPIO2, Level::Low, OutputConfig::default());
 
     // Status LEDs: GPIO4 (hijau = normal), GPIO5 (kuning = lockout)
-    let mut normal_led = io.pins.gpio4.into_push_pull_output();
-    let mut lockout_led = io.pins.gpio5.into_push_pull_output();
+    let mut normal_led = Output::new(peripherals.GPIO4, Level::High, OutputConfig::default());
+    let mut lockout_led = Output::new(peripherals.GPIO5, Level::Low, OutputConfig::default());
 
     // Fault Injection Button: Push-button pada GPIO15 (pull-down ekstern)
-    let fault_button = io.pins.gpio15.into_pull_down_input();
+    let fault_button = Input::new(
+        peripherals.GPIO15,
+        InputConfig::default().with_pull(Pull::Down),
+    );
 
     // Hardware Timer untuk pengukuran latensi presisi (TIMG0, 80 MHz APB)
-    let timg0 = TimerGroup::new(peripherals.TIMG0, &clocks);
-    let mut timer0 = timg0.timer0;
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+    let timer0 = timg0.timer0;
 
     // Delay generator untuk polling interval
-    let mut delay = esp_hal::delay::Delay::new(&clocks);
+    let delay = Delay::new();
 
-    // ── Initial LED State: Normal Operation ──────────────────────────────
-    valve_led.set_low();     // Merah OFF (valve terbuka)
-    normal_led.set_high();   // Hijau ON  (sistem normal)
-    lockout_led.set_low();   // Kuning OFF
+    // RTC controller untuk power management (light sleep saat idle)
+    let mut rtc = Rtc::new(peripherals.LPWR);
+    let mut idle_cycles: u32 = 0;
+    const IDLE_SLEEP_THRESHOLD: u32 = 3;  // Sleep after 3 idle cycles
 
-    // ── Boot Header (Serial Output ke Proteus Virtual Terminal) ──────────
+    // ── Boot Header ──────────────────────────────────────────────────────
     println!("====================================================");
-    println!("  Safe-Concurrency Multi-Sensor Fusion System v2.0");
+    println!("  Safe-Concurrency Multi-Sensor Fusion System v3.0");
     println!("  Platform: ESP32-S3 | Rust (no_std, bare-metal)");
+    println!("  Framework: esp-hal v1.1.1");
     println!("  Concurrency: Mutex<RefCell<T>> + critical_section");
-    println!("  Voting Quorum: >= {} of 3 sensors", VOTING_QUORUM);
+    println!("  Scalability: N-sensor voting (N = {})", N_SENSORS);
+    println!("  Voting Quorum: >= {} of {} (majority)", VOTING_QUORUM, N_SENSORS);
+    println!("  Lockout       : Adaptive (Minor={}ms, Critical={}ms)", LOCKOUT_MINOR_MS, LOCKOUT_CRITICAL_MS);
+    println!("  Power Mgmt    : Light sleep after {} idle cycles", IDLE_SLEEP_THRESHOLD);
     println!("====================================================");
     println!("CONFIG:");
-    println!("  Temp Threshold : {} C", TEMPERATURE_ANOMALY_THRESHOLD);
-    println!("  Press Range    : {}..{} hPa", PRESSURE_MIN_THRESHOLD, PRESSURE_MAX_THRESHOLD);
-    println!("  Vib Threshold  : {}", VIBRATION_ANOMALY_THRESHOLD);
-    println!("  Lockout Time   : {} ms", LOCKOUT_DURATION_MS);
     println!("  Poll Interval  : {} ms", SENSOR_POLL_INTERVAL_MS);
+    println!("  Sensor Thresholds:");
+    print_sensor_config();
     println!("----------------------------------------------------");
-    println!("DATA FORMAT: iter, temp, press, vib, latency_us, status");
+    print_csv_header();
     println!("====================================================");
 
+    // ── Event-Triggered State Tracking ────────────────────────────────────
+    #[derive(Debug, PartialEq)]
+    enum SystemStatus {
+        Normal,
+        Fault,
+        Lockout,
+    }
+
+    let mut prev_status = SystemStatus::Normal;
     let mut iteration: u32 = 0;
 
-    // ── Main Control Loop ────────────────────────────────────────────────
+    // ── Main Event-Triggered Control Loop ─────────────────────────────────
     loop {
-        // ── STEP 1: Fault Injection via GPIO15 ───────────────────────────
-        // Memeriksa apakah tombol fisik ditekan (simulasi sensor rusak).
-        // Injeksi dilakukan di dalam critical_section untuk konsistensi
-        // dengan akses state lainnya — mencegah race condition.
-        if fault_button.is_high() {
+        // ── STEP 1: Detect Input Change (Event Trigger) ──────────────────
+        let button_pressed = fault_button.is_high();
+
+        if button_pressed {
             critical_section::with(|cs| {
                 let mut state = STATE.borrow_ref_mut(cs);
-                state.sensor_vib = 9999;   // Injeksi vibrasi anomali
-                state.sensor_temp = 99;     // Injeksi suhu anomali
+                state.sensor_values[0] = 99;     // Suhu anomali
+                state.sensor_values[2] = 9999;   // Vibrasi anomali
             });
         }
 
-        // ── STEP 2: Baca Sensor State (Thread-Safe) ─────────────────────
-        // Semua pembacaan dilakukan dalam satu critical section untuk
-        // menjamin snapshot state yang konsisten (atomik).
-        let (temp, press, vib, lockout_remaining) = critical_section::with(|cs| {
+        // ── STEP 2: Read State ───────────────────────────────────────────
+        let (sensor_values, lockout_remaining) = critical_section::with(|cs| {
             let state = STATE.borrow_ref(cs);
-            (
-                state.sensor_temp,
-                state.sensor_press,
-                state.sensor_vib,
-                state.lockout_remaining_ms,
-            )
+            (state.sensor_values, state.lockout_remaining_ms)
         });
 
-        // ── STEP 3: Evaluasi Redundansi Sensor (Voting Logic) ───────────
-        let eval = evaluate_sensor_redundancy(temp, press, vib);
-
-        if eval.is_fault && lockout_remaining == 0 {
-            // ── STEP 4a: FAIL-SAFE TRIGGER ──────────────────────────────
-            // Mulai hardware timer SEBELUM aksi untuk mengukur latensi
-            // deteksi→aksi secara presisi (µs-level, bukan software timing).
-            timer0.start();
-            let t_start = timer0.now();
-
-            // Tutup valve darurat + update semua LED
-            update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, true, LOCKOUT_DURATION_MS);
-
-            // Hitung latensi deteksi-ke-aksi dari hardware timer
-            let t_end = timer0.now();
-            let elapsed_ticks = t_end.wrapping_sub(t_start);
-            // ESP32 APB clock = 80 MHz → 1 tick = 12.5 ns → ticks/80 = µs
-            let latency_us = elapsed_ticks / APB_FREQ_MHZ;
-
-            // Set lockout timer (valve TETAP tertutup selama LOCKOUT_DURATION_MS)
-            critical_section::with(|cs| {
-                let mut state = STATE.borrow_ref_mut(cs);
-                state.fault_active = true;
-                state.lockout_remaining_ms = LOCKOUT_DURATION_MS;
-            });
-
-            // Output CSV: fault event dengan latensi terukur
-            println!(
-                "{}, {}, {}, {}, {}, FAULT_DETECTED({})",
-                iteration, temp, press, vib, latency_us, eval.anomaly_count
-            );
-
-        } else if lockout_remaining > 0 {
-            // ── STEP 4b: LOCKOUT AKTIF — valve tetap tertutup ───────────
-            // Decrement lockout counter menggunakan saturating subtraction
-            let new_remaining = lockout_remaining.saturating_sub(SENSOR_POLL_INTERVAL_MS);
-
-            critical_section::with(|cs| {
-                let mut state = STATE.borrow_ref_mut(cs);
-                state.lockout_remaining_ms = new_remaining;
-
-                // Jika lockout selesai, clear fault dan reset sensor ke normal
-                if new_remaining == 0 {
-                    state.fault_active = false;
-                    state.sensor_vib = 5;      // Reset ke baseline normal
-                    state.sensor_temp = 25;     // Reset ke baseline normal
-                }
-            });
-
-            if new_remaining == 0 {
-                // Lockout complete — buka valve, system kembali normal
-                update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, false, 0);
-                println!(
-                    "{}, {}, {}, {}, 0, LOCKOUT_CLEARED",
-                    iteration, temp, press, vib
-                );
-            } else {
-                // Lockout masih aktif — valve tetap tertutup
-                update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, true, new_remaining);
-                println!(
-                    "{}, {}, {}, {}, 0, LOCKOUT_ACTIVE({}ms)",
-                    iteration, temp, press, vib, new_remaining
-                );
-            }
-
+        let current_status = if lockout_remaining > 0 {
+            SystemStatus::Lockout
         } else {
-            // ── STEP 4c: OPERASI NORMAL ─────────────────────────────────
-            update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, false, 0);
-            println!(
-                "{}, {}, {}, {}, 0, NORMAL",
-                iteration, temp, press, vib
-            );
+            SystemStatus::Normal
+        };
+
+        // ── STEP 3: Event-Driven Evaluation ──────────────────────────────
+        // ── STEP 3: Event-Driven Evaluation ──────────────────────────────
+        let transition = current_status != prev_status || button_pressed;
+
+        if transition || lockout_remaining > 0 {
+            idle_cycles = 0;  // Reset sleep counter on activity
+            let eval = evaluate_sensor_redundancy(&sensor_values);
+
+            if eval.is_fault && lockout_remaining == 0 {
+                // ── FAULT TRIGGER (Adaptive Lockout) ──────────────────────
+                let severity = classify_severity(eval.anomaly_count);
+                let lockout_ms = severity.lockout_ms();
+
+                let t_start = timer0.now();
+                update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, true, lockout_ms);
+                let latency_us = t_start.elapsed().as_micros();
+
+                critical_section::with(|cs| {
+                    let mut state = STATE.borrow_ref_mut(cs);
+                    state.fault_active = true;
+                    state.lockout_remaining_ms = lockout_ms;
+                });
+
+                print!("{}", iteration);
+                for i in 0..N_SENSORS {
+                    print!(", {}", sensor_values[i]);
+                }
+                println!(
+                    ", {}, FAULT_DETECTED({},{}/{})",
+                    latency_us, severity.label(), eval.anomaly_count, N_SENSORS
+                );
+                prev_status = SystemStatus::Fault;
+
+            } else if lockout_remaining > 0 {
+                // ── LOCKOUT COUNTDOWN ─────────────────────────────────────
+                let new_remaining = lockout_remaining.saturating_sub(SENSOR_POLL_INTERVAL_MS);
+
+                critical_section::with(|cs| {
+                    let mut state = STATE.borrow_ref_mut(cs);
+                    state.lockout_remaining_ms = new_remaining;
+                    if new_remaining == 0 {
+                        state.fault_active = false;
+                        state.sensor_values = SENSOR_INITIAL;
+                    }
+                });
+
+                if new_remaining == 0 {
+                    update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, false, 0);
+                    print_data_row(iteration, &sensor_values, 0, "LOCKOUT_CLEARED");
+                    prev_status = SystemStatus::Normal;
+                } else {
+                    update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, true, new_remaining);
+                    if transition {
+                        print!("{}", iteration);
+                        for i in 0..N_SENSORS {
+                            print!(", {}", sensor_values[i]);
+                        }
+                        println!(", 0, LOCKOUT_ACTIVE({}ms)", new_remaining);
+                    }
+                    prev_status = SystemStatus::Lockout;
+                }
+
+            } else {
+                // ── NORMAL (transition from non-normal → normal) ──────────
+                update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, false, 0);
+                if transition {
+                    print_data_row(iteration, &sensor_values, 0, "NORMAL (event-triggered)");
+                }
+                prev_status = SystemStatus::Normal;
+            }
+        } else {
+            // ── IDLE: No event, no transition ────────────────────────────
+            idle_cycles += 1;
+
+            if idle_cycles >= IDLE_SLEEP_THRESHOLD {
+                // Enter light sleep — wake via RTC timer in ~450ms
+                let wake_timer = TimerWakeupSource::new(
+                    core::time::Duration::from_micros((SENSOR_POLL_INTERVAL_MS - 50) as u64 * 1000)
+                );
+                println!(". SLEEP {}", iteration);
+                rtc.sleep_light(&[&wake_timer]);
+                // Resumes here after wake — reset idle counter
+                idle_cycles = 0;
+            } else if iteration % 10 == 0 {
+                println!(". {}", iteration);
+            }
         }
 
         iteration += 1;
-        delay.delay_ms(SENSOR_POLL_INTERVAL_MS);
+        delay.delay_millis(SENSOR_POLL_INTERVAL_MS);
     }
 }

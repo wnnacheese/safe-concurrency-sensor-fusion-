@@ -6,9 +6,9 @@ authors = ["ETS PemKom Team"]
 description = "Safe-Concurrency Multi-Sensor Fusion for Industrial Safety-Critical Systems on ESP32"
 
 [dependencies]
-esp-hal = { version = "0.22.0", features = ["esp32s3"] }
-esp-backtrace = { version = "0.15.0", features = ["esp32s3", "panic-handler", "println"] }
-esp-println = { version = "0.13.0", features = ["esp32s3", "uart"] }
+esp-hal = { version = "1.1.1", features = ["esp32s3", "unstable"] }
+esp-backtrace = { version = "0.19.0", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.17.0", features = ["esp32s3", "auto"] }
 critical-section = "1.2.0"
 
 [profile.dev]

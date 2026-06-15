@@ -81,10 +81,13 @@
 \vspace*{2cm}
 {\LARGE\bfseries EVALUASI TENGAH SEMESTER\\[0.3cm]}
 {\Large MATA KULIAH PEMROGRAMAN KONTROLLER\\[0.5cm]}
-{\large BAGIAN B: STUDI LITERATUR \& SIMULASI METODE BARU\\[1.5cm]}
-\rule{\linewidth}{0.5pt}\\[0.5cm]
-{\huge\bfseries Safe-Concurrency for\\Multi-Sensor Fusion in\\Industrial Safety-Critical Systems\\[0.5cm]}
-\rule{\linewidth}{0.5pt}\\[1.5cm]
+{\\large BAGIAN B: STUDI LITERATUR \\& SIMULASI METODE BARU\\\\[1.5cm]}
+\
+ule{\\linewidth}{0.5pt}\\\\[0.5cm]
+{\\huge\\bfseries Safe-Concurrency for\\\\Multi-Sensor Fusion in\\\\Industrial Safety-Critical Systems\\\\[0.2cm]}
+{\\Large\\bfseries v3.0 — N-Sensor + Adaptive Lockout + Event-Triggered + Power Mgmt\\\\[0.5cm]}
+\
+ule{\\linewidth}{0.5pt}\\\\[1.5cm]
 {\large Disusun oleh:\\[0.5cm]}
 {\Large Abdurrauf Almutawakkil\\NRP:  2042241115\\[0.3cm]}
 {\large Kelas: 4C\\[0,5cm]}
@@ -285,7 +288,7 @@ Metode yang diusulkan memadukan konsep \textit{safe-concurrency} dari bahasa pem
 
     \item \textbf{Voting-Based Redundancy:} Fungsi \texttt{evaluate\_sensor\_redundancy()} menerima pembacaan ketiga sensor dan menghitung jumlah sensor yang menunjukkan anomali. Jika $\geq 2$ sensor mengindikasikan nilai di luar threshold (suhu $> 80$°C, tekanan $< 900$ atau $> 1200$ hPa, vibrasi $> 500$), maka sistem mendeklarasikan \textit{fault} dan memicu aktuator darurat.
 
-    \item \textbf{Fail-Safe Actuator dengan Lockout:} Saat fault terdeteksi, katup darurat (GPIO2) segera ditutup. Berbeda dengan pendekatan konvensional yang langsung membuka kembali katup, metode ini menerapkan \textit{lockout period} selama 2000 ms. Selama periode ini, katup tetap tertutup meskipun sensor kembali normal, mencegah fenomena \textit{valve bounce} yang berbahaya di lingkungan industri.
+    \\item \\textbf{Fail-Safe Actuator dengan Adaptive Lockout:} Saat fault terdeteksi, katup darurat (GPIO2) segera ditutup. Sistem menerapkan \\textit{adaptive lockout} dengan dua tingkat severity: \\textbf{Minor} (quorum terpenuhi, redundansi masih tersisa — 500 ms) dan \\textbf{Critical} (seluruh N sensor anomali — 2000 ms). Selama periode lockout, katup tetap tertutup meskipun sensor kembali normal, mencegah fenomena \\textit{valve bounce} yang berbahaya di lingkungan industri.
 
     \item \textbf{Hardware-Timed Latency:} Latensi antara deteksi anomali dan respons aktuator diukur menggunakan \textit{hardware timer} TIMG0 (80 MHz APB clock) pada ESP32-S3, bukan nilai \textit{hardcoded}. Presisi pengukuran mencapai orde mikro-detik ($\mu$s), memungkinkan evaluasi performa \textit{real-time} yang akurat.
 \end{itemize}
@@ -452,7 +455,7 @@ Jumlah fault terdeteksi & 1 per sesi tombol ditekan \\
 \hline
 Jumlah sensor anomali saat fault & 2 dari 3 (suhu + vibrasi) \\
 \hline
-Durasi lockout & 2000 ms (4 siklus polling) \\
+Durasi lockout & 500 ms (Minor) / 2000 ms (Critical) \\\\
 \hline
 Interval polling & 500 ms \\
 \hline
@@ -463,7 +466,7 @@ Interval polling & 500 ms \\
 \begin{itemize}
   \item \textbf{Deteksi fault:} Saat tombol GPIO15 ditekan, sensor suhu diinjeksi ke 99$^\circ$C (threshold: 80$^\circ$C) dan vibrasi ke 9999 (threshold: 500). Dua dari tiga sensor melewati ambang batas, memenuhi kuorum voting ($\geq 2$), sehingga fault langsung dideklarasikan.
   \item \textbf{Respons aktuator:} LED Merah (GPIO2) menyala dan LED Hijau (GPIO4) padam secara instan pada siklus polling yang sama dengan deteksi anomali, menunjukkan latensi deteksi-ke-aksi yang sangat rendah.
-  \item \textbf{Mekanisme lockout:} Setelah fault terdeteksi, valve tetap tertutup selama 2000 ms (4 siklus $\times$ 500 ms). Selama periode ini, LED Kuning (GPIO5) menyala sebagai indikator visual. Setelah lockout selesai, sistem otomatis kembali ke kondisi normal.
+  \\item \\textbf{Mekanisme adaptive lockout:} Sistem mengklasifikasikan fault menjadi dua tingkat severity. Minor (2/3 sensor anomali) memicu lockout 500 ms, sementara Critical (3/3 sensor anomali) memicu lockout 2000 ms. LED Kuning (GPIO5) menyala selama periode lockout. Setelah selesai, sistem otomatis kembali normal.
   \item \textbf{Pencegahan valve bounce:} Mekanisme lockout berhasil mencegah osilasi valve yang berbahaya. Meskipun sensor kembali normal di tengah periode lockout, valve tetap dalam posisi aman (tertutup).
 \end{itemize}
 
@@ -592,7 +595,7 @@ Berbeda dengan pendekatan software-timing yang umum digunakan (J21, Radovici et 
 Pendekatan J10 (MS-SIAF-Net) menggunakan deep learning untuk sensor fusion, membutuhkan resource komputasi besar. Metode kami menggunakan voting logic sederhana ($\geq 2$ sensor anomali = fault) yang dapat berjalan pada bare-metal MCU tanpa framework ML, memadukan FW17 (real-time embedded) dengan FW12 (hw-sw co-design).
 
 \item \textbf{Orisinalitas Kontribusi.}
-Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Rust bare-metal pada ESP32-S3 (Xtensa LX7), (b) \texttt{Mutex<RefCell<T>{}>} + \texttt{critical\_section} untuk concurrency, (c) voting-based sensor fusion, dan (d) hardware-timed fail-safe dengan lockout, dalam satu sistem terintegrasi. Metode ini menjembatani celah antara riset formal verification Rust (J19, J23) dengan implementasi praktis pada embedded system --- menjawab FW19 dan FW24 secara langsung.
+Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Rust bare-metal pada ESP32-S3 (Xtensa LX7), (b) \\texttt{Mutex<RefCell<T>{}>} + \\texttt{critical\\_section} untuk concurrency, (c) voting-based N-sensor fusion dengan majority quorum, (d) adaptive lockout berdasarkan fault severity, (e) event-triggered architecture untuk efisiensi CPU, dan (f) power management dengan RTC light-sleep --- dalam satu sistem terintegrasi. Metode ini menjembatani celah antara riset formal verification Rust (J19, J23) dengan implementasi praktis pada embedded system. Versi v3.0 menambahkan skalabilitas N-sensor, klasifikasi severity fault, dan manajemen daya untuk deployment industri nyata.
 
 \end{enumerate}
 

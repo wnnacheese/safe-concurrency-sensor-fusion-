@@ -2,7 +2,7 @@
 # Safe-Concurrency Multi-Sensor Fusion - MicroPython (Proteus ESP32-S3)
 # ============================================================================
 # Platform  : ESP32-S3 DevKit (Proteus MicroPython VSM)
-# Purpose   : Port from Arduino C++ / Rust to MicroPython for simulation.
+# Purpose   : Port from Rust no_std to MicroPython for Proteus simulation.
 #             Proteus ESP32-S3 (MicroPython category) only accepts .py.
 #
 # COMPATIBILITY NOTE:
@@ -19,8 +19,8 @@
 #   UART0 TX (GPIO1) -> Virtual Terminal (115200 baud)
 #
 # CSV Output Format:
-#   iteration  temp  press  vib  latency_us  status_code
-#   Status: 0=NORMAL, 1=FAULT_DETECTED, 2=LOCKOUT_ACTIVE, 3=LOCKOUT_CLEARED
+#   iter  temp  press  vib  latency_us  status
+#   Status: NORMAL, FAULT_DETECTED(MINOR|CRITICAL,count/N), LOCKOUT_ACTIVE, LOCKOUT_CLEARED
 # ============================================================================
 
 # pyrefly: ignore [missing-import]
@@ -36,8 +36,9 @@ PIN_BUTTON  = Pin(15, Pin.IN)    # Button (external pull-down)
 # -- Configuration -----------------------------------------------------------
 TEMP_THRESHOLD   = 80    # Temperature threshold (C)
 VIB_THRESHOLD    = 500   # Vibration threshold (arbitrary)
-LOCKOUT_MS       = 2000  # Lockout duration (ms)
-POLL_INTERVAL_MS = 500   # Polling interval (ms)
+LOCKOUT_MINOR_MS    = 500   # Minor fault lockout (quorum met, redundancy exists)
+LOCKOUT_CRITICAL_MS = 2000  # Critical fault lockout (all sensors anomalous)
+POLL_INTERVAL_MS    = 500   # Polling interval (ms)
 
 # -- System State -------------------------------------------------------------
 sensor_temp  = 25
@@ -45,6 +46,23 @@ sensor_press = 1013
 sensor_vib   = 5
 fault_active = False
 lockout_remaining = 0
+
+
+# -- Adaptive Lockout ---------------------------------------------------------
+def lockout_duration(anomaly_count):
+    """Return lockout duration based on severity."""
+    if anomaly_count >= 3:  # All 3 sensors anomalous
+        return LOCKOUT_CRITICAL_MS
+    else:
+        return LOCKOUT_MINOR_MS
+
+
+def severity_label(anomaly_count):
+    """Return severity label for CSV output."""
+    if anomaly_count >= 3:
+        return "CRITICAL"
+    else:
+        return "MINOR"
 
 
 # -- Voting-Based Redundancy --------------------------------------------------
@@ -81,25 +99,29 @@ PIN_LOCKOUT.off()
 
 # -- Boot Header --------------------------------------------------------------
 print("====================================================")
-print("  Safe-Concurrency Multi-Sensor Fusion System v2.0")
+print("  Safe-Concurrency Multi-Sensor Fusion System v3.0")
 print("  Platform: ESP32-S3 | MicroPython (Proteus VSM)")
-print("  Logic: Voting-Based Redundancy (>=2 sensors)")
+print("  Logic: N-Sensor Voting + Adaptive Lockout + Event-Triggered")
 print("====================================================")
 print("CONFIG:")
 print("  Vib Threshold  : " + str(VIB_THRESHOLD))
 print("  Temp Threshold : " + str(TEMP_THRESHOLD) + " C")
-print("  Lockout Time   : " + str(LOCKOUT_MS) + " ms")
+print("  Lockout        : Adaptive (Minor=" + str(LOCKOUT_MINOR_MS) + "ms, Critical=" + str(LOCKOUT_CRITICAL_MS) + "ms)")
 print("  Poll Interval  : " + str(POLL_INTERVAL_MS) + " ms")
 print("----------------------------------------------------")
 print("DATA FORMAT: iter, temp, press, vib, latency_us, status")
 print("====================================================")
 
-# -- Main Loop ----------------------------------------------------------------
+# -- Main Loop (Event-Triggered) -----------------------------------------------
 iteration = 0
+prev_status = "NORMAL"
+was_pressed = False
 
 while True:
-    # STEP 1: Fault Injection via GPIO15
-    if PIN_BUTTON.value() == 1:
+    # STEP 1: Detect Input Event (button press)
+    button_pressed = (PIN_BUTTON.value() == 1)
+
+    if button_pressed:
         sensor_vib  = 9999
         sensor_temp = 99
 
@@ -108,50 +130,68 @@ while True:
     vib = sensor_vib
     lockout_rem = lockout_remaining
 
-    # STEP 2: Evaluate
-    is_fault, anomaly_count = evaluate_redundancy(temp, press, vib)
+    current_status = "LOCKOUT" if lockout_rem > 0 else "NORMAL"
+    event = button_pressed and not was_pressed  # Rising edge only
+    transition = (current_status != prev_status) or event
+    was_pressed = button_pressed
 
-    # STEP 3: State Machine
-    if is_fault and lockout_rem == 0:
-        t_start = time.ticks_us()
+    # STEP 2: Event-Driven Evaluation
+    if transition or lockout_rem > 0:
+        is_fault, anomaly_count = evaluate_redundancy(temp, press, vib)
 
-        PIN_VALVE.on()
-        PIN_NORMAL.off()
+        if is_fault and lockout_rem == 0:
+            t_start = time.ticks_us()
+            lockout_ms = lockout_duration(anomaly_count)
+            sev = severity_label(anomaly_count)
 
-        t_end = time.ticks_us()
-        latency_us = time.ticks_diff(t_end, t_start)
+            PIN_VALVE.on()
+            PIN_NORMAL.off()
 
-        fault_active = True
-        lockout_remaining = LOCKOUT_MS
-        update_leds(True, LOCKOUT_MS)
+            t_end = time.ticks_us()
+            latency_us = time.ticks_diff(t_end, t_start)
 
-        print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " " + str(latency_us) + " 1  # FAULT_DETECTED (anomalies=" + str(anomaly_count) + ")")
+            fault_active = True
+            lockout_remaining = lockout_ms
+            update_leds(True, lockout_ms)
 
-    elif lockout_rem > 0:
-        if lockout_rem > POLL_INTERVAL_MS:
-            new_remaining = lockout_rem - POLL_INTERVAL_MS
+            print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " " + str(latency_us) + " FAULT_DETECTED(" + sev + "," + str(anomaly_count) + "/3)")
+            prev_status = "FAULT"
+
+        elif lockout_rem > 0:
+            if lockout_rem > POLL_INTERVAL_MS:
+                new_remaining = lockout_rem - POLL_INTERVAL_MS
+            else:
+                new_remaining = 0
+
+            lockout_remaining = new_remaining
+
+            if new_remaining == 0:
+                fault_active = False
+                sensor_vib  = 5
+                sensor_temp = 25
+
+                PIN_VALVE.off()
+                PIN_NORMAL.on()
+                PIN_LOCKOUT.off()
+
+                print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " 0 LOCKOUT_CLEARED")
+                prev_status = "NORMAL"
+            else:
+                update_leds(True, new_remaining)
+                if transition:
+                    print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " 0 LOCKOUT_ACTIVE(" + str(new_remaining) + "ms)")
+                prev_status = "LOCKOUT"
+
         else:
-            new_remaining = 0
-
-        lockout_remaining = new_remaining
-
-        if new_remaining == 0:
-            fault_active = False
-            sensor_vib  = 5
-            sensor_temp = 25
-
-            PIN_VALVE.off()
-            PIN_NORMAL.on()
-            PIN_LOCKOUT.off()
-
-            print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " 0 3  # LOCKOUT_CLEARED")
-        else:
-            update_leds(True, new_remaining)
-            print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " 0 2  # LOCKOUT_ACTIVE (" + str(new_remaining) + "ms)")
+            update_leds(False, 0)
+            if transition:
+                print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " 0 NORMAL (event-triggered)")
+            prev_status = "NORMAL"
 
     else:
-        update_leds(False, 0)
-        print(str(iteration) + " " + str(temp) + " " + str(press) + " " + str(vib) + " 0 0  # NORMAL")
+        # IDLE: No event, no transition
+        if iteration % 10 == 0:
+            print(". " + str(iteration))
 
     iteration = iteration + 1
     time.sleep_ms(POLL_INTERVAL_MS)
