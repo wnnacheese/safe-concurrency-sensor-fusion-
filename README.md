@@ -21,7 +21,6 @@
 - [Getting Started](#-getting-started)
 - [Simulation Results](#-simulation-results)
 - [Method Advantages](#-method-advantages)
-- [Proteus Wiring Modifications](#-proteus-wiring-modifications)
 - [Changelog](#-changelog)
 - [References](#-references)
 
@@ -243,37 +242,6 @@ On every push/PR to `main`:
 | Polling | ✅ Event-triggered (no redundant evaluation) | ❌ Fixed-interval polling |
 | Power | ✅ Light sleep after idle (RTC timer wake) | ❌ Always-on super-loop |
 | Latency | ✅ Hardware timer TIMG0 (80MHz) | ❌ Software `millis()` timing |
-
----
-
-## 🔧 Proteus Wiring Modifications
-
-If you modify the Proteus schematic (add sensors, change GPIO, etc.), update these files:
-
-### 1. Rust (`src/main.rs`)
-- **GPIO pins**: `peripherals.GPIO2`, `.GPIO4`, `.GPIO5`, `.GPIO15`
-- **N_SENSORS**: change `const N_SENSORS: usize = 3;` to 5, 7, etc.
-- **Threshold arrays**: update `SENSOR_LOW[]`, `SENSOR_HIGH[]`, `SENSOR_INITIAL[]`
-- **Sensor names**: update `SENSOR_NAMES[]` array
-- **Fault injection**: modify `sensor_values[0]` and `[2]` indices
-
-### 2. MicroPython (`main.py`)
-- **Pin definitions**: `PIN_VALVE = Pin(2, Pin.OUT)`, etc.
-- **Thresholds**: `TEMP_THRESHOLD`, `VIB_THRESHOLD`
-- **Lockout**: `LOCKOUT_MINOR_MS`, `LOCKOUT_CRITICAL_MS`
-- **Anomaly check**: `if press < 900 or press > 1200`
-
-### 3. Arduino C++ (`.ino`)
-- **Pin constants**: `PIN_VALVE_LED`, `PIN_NORMAL_LED`, etc.
-- **`N_SENSORS`** and **`VOTING_QUORUM`**
-- **`compareSensor()` function** for anomaly checks
-
-### Adding a New Sensor (e.g., humidity, GPIO16)
-
-1. **Wiring**: GPIO16 → Sensor → 10kΩ pull-up
-2. **Rust**: Add threshold in `SENSOR_LOW[]`/`SENSOR_HIGH[]`, name in `SENSOR_NAMES[]`
-3. **Python**: Add pin definition, threshold constant, anomaly check
-4. **Arduino**: Add `PIN_SENSOR`, threshold, check in `compareSensor()`
 
 ---
 
