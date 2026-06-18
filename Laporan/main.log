@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.27)  18 JUN 2026 16:03
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.27)  18 JUN 2026 16:52
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -919,17 +919,17 @@ Overfull \hbox (34.47498pt too wide) in paragraph at lines 229--230
  []
 
 [6] [7]
-<DB1.drawio.png, id=160, 952.55875pt x 462.72874pt>
+<DB1.drawio.png, id=160, 737.8767pt x 298.9569pt>
 File: DB1.drawio.png Graphic file (type png)
 <use DB1.drawio.png>
 Package pdftex.def Info: DB1.drawio.png  used on input line 265.
-(pdftex.def)             Requested size: 455.24411pt x 221.14702pt.
-<FLOW.png, id=162, 452.69125pt x 1085.05376pt>
+(pdftex.def)             Requested size: 455.24411pt x 184.45268pt.
+<FLOW.png, id=161, 451.6875pt x 2278.5125pt>
 File: FLOW.png Graphic file (type png)
 <use FLOW.png>
 Package pdftex.def Info: FLOW.png  used on input line 275.
-(pdftex.def)             Requested size: 227.62206pt x 545.5885pt.
- [8 <./DB1.drawio.png>] [9 <./FLOW.png>] [10] [11]
+(pdftex.def)             Requested size: 113.81102pt x 574.11171pt.
+ [8 <./DB1.drawio.png (PNG copy)>] [9 <./FLOW.png>] [10] [11]
 Overfull \hbox (61.34187pt too wide) in paragraph at lines 334--359
  [][] 
  []
@@ -939,12 +939,12 @@ Overfull \hbox (25.81216pt too wide) in paragraph at lines 399--412
  [][] 
  []
 
-<1.png, id=204, 2167.34718pt x 1444.64719pt>
+<1.png, id=203, 2167.34718pt x 1444.64719pt>
 File: 1.png Graphic file (type png)
 <use 1.png>
 Package pdftex.def Info: 1.png  used on input line 427.
 (pdftex.def)             Requested size: 218.51521pt x 145.64148pt.
-<2.png, id=205, 2167.34718pt x 1444.64719pt>
+<2.png, id=204, 2167.34718pt x 1444.64719pt>
 File: 2.png Graphic file (type png)
 <use 2.png>
 Package pdftex.def Info: 2.png  used on input line 433.
@@ -955,31 +955,31 @@ nput line 446.
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 448.
  [14 <./1.png> <./2.png>] [15]
-<sensor_fusion_analysis.png, id=276, 1405.25pt x 1003.75pt>
+<sensor_fusion_analysis.png, id=275, 1405.25pt x 1003.75pt>
 File: sensor_fusion_analysis.png Graphic file (type png)
 <use sensor_fusion_analysis.png>
 Package pdftex.def Info: sensor_fusion_analysis.png  used on input line 512.
 (pdftex.def)             Requested size: 432.48051pt x 308.90784pt.
  [16 <./sensor_fusion_analysis.png>]
-<state_timeline.png, id=285, 1405.25pt x 501.875pt>
+<state_timeline.png, id=284, 1405.25pt x 501.875pt>
 File: state_timeline.png Graphic file (type png)
 <use state_timeline.png>
 Package pdftex.def Info: state_timeline.png  used on input line 569.
 (pdftex.def)             Requested size: 432.48051pt x 154.4539pt.
  [17]
-<voting_heatmap.png, id=291, 1304.875pt x 602.25pt>
+<voting_heatmap.png, id=290, 1304.875pt x 602.25pt>
 File: voting_heatmap.png Graphic file (type png)
 <use voting_heatmap.png>
 Package pdftex.def Info: voting_heatmap.png  used on input line 576.
 (pdftex.def)             Requested size: 432.48051pt x 199.60693pt.
-<method_comparison.png, id=292, 1204.5pt x 702.625pt>
+<method_comparison.png, id=291, 1204.5pt x 702.625pt>
 File: method_comparison.png Graphic file (type png)
 <use method_comparison.png>
 Package pdftex.def Info: method_comparison.png  used on input line 583.
 (pdftex.def)             Requested size: 386.96027pt x 225.72372pt.
 
 [18 <./state_timeline.png> <./voting_heatmap.png>]
-<latency_analysis.png, id=300, 1204.5pt x 652.4375pt>
+<latency_analysis.png, id=299, 1204.5pt x 652.4375pt>
 File: latency_analysis.png Graphic file (type png)
 <use latency_analysis.png>
 Package pdftex.def Info: latency_analysis.png  used on input line 590.
@@ -991,7 +991,7 @@ Overfull \hbox (5.52357pt too wide) in paragraph at lines 678--680
  []
 
 [21]
-<linkedin_post.png, id=330, 831.85782pt x 1172.12906pt>
+<linkedin_post.png, id=329, 831.85782pt x 1172.12906pt>
 File: linkedin_post.png Graphic file (type png)
 <use linkedin_post.png>
 Package pdftex.def Info: linkedin_post.png  used on input line 716.
@@ -1001,13 +1001,17 @@ Package pdftex.def Info: linkedin_post.png  used on input line 716.
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: FC8FC67D3C6DA600A4CC35D1C4F00BF2;3410.
  ) 
 Here is how much of TeX's memory you used:
  26830 strings out of 467691
  486595 string characters out of 5429883
- 1068623 words of memory out of 5000000
+ 1068624 words of memory out of 5000000
  55306 multiletter control sequences out of 15000+600000
  647828 words of font info for 80 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1038,9 +1042,9 @@ fonts/cm/cmex10.pfb><D:/App/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><D
 1/public/amsfonts/cm/cmr12.pfb><D:/App/MiKTeX/fonts/type1/public/amsfonts/cm/cm
 r8.pfb><D:/App/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><D:/App/MiKTeX/
 fonts/type1/public/amsfonts/cm/cmsy8.pfb>
-Output written on main.pdf (26 pages, 1380498 bytes).
+Output written on main.pdf (26 pages, 2016012 bytes).
 PDF statistics:
- 1201 PDF objects out of 1440 (max. 8388607)
+ 1200 PDF objects out of 1200 (max. 8388607)
  167 named destinations out of 1000 (max. 500000)
  231 words of extra memory for PDF output out of 10000 (max. 10000000)
 
