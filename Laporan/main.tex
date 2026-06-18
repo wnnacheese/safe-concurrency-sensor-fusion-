@@ -420,7 +420,7 @@ fn evaluate_sensor_redundancy(temp: u32, press: u32, vib: u32)
 
 \subsection{Data dan Plot GNUPlot}
 
-Data hasil simulasi direkam langsung dari output Virtual Terminal Proteus dalam format CSV 6 kolom (\texttt{iter, temp, press, vib, latency\_us, status}) dan diplot menggunakan GNUPlot. Tiga panel visualisasi dihasilkan:
+Data hasil simulasi direkam langsung dari output debug console Proteus dalam format CSV 6 kolom (\texttt{iter, temp, press, vib, latency\_us, status}) dan diplot menggunakan GNUPlot. Tiga panel visualisasi dihasilkan:
 
 \begin{enumerate}
   \item \textbf{Panel 1:} Pembacaan multi-sensor (suhu dan vibrasi) vs iterasi, dengan garis threshold horizontal.
@@ -431,7 +431,7 @@ Data hasil simulasi direkam langsung dari output Virtual Terminal Proteus dalam 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\textwidth]{sensor_fusion_analysis.png}
-  \caption{Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari Virtual Terminal Proteus.}
+  \caption{Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari debug console Proteus.}
   \label{fig:gnuplot}
 \end{figure}
 
@@ -603,7 +603,7 @@ Berbeda dengan pendekatan software-timing yang umum digunakan (J21, Radovici et 
 Pendekatan J10 (MS-SIAF-Net) menggunakan deep learning untuk sensor fusion, membutuhkan resource komputasi besar. Metode kami menggunakan voting logic sederhana ($\geq 2$ sensor anomali = fault) yang dapat berjalan pada bare-metal MCU tanpa framework ML, memadukan FW17 (real-time embedded) dengan FW12 (hw-sw co-design).
 
 \item \textbf{Orisinalitas Kontribusi.}
-Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Rust bare-metal pada ESP32-S3 (Xtensa LX7), (b) \texttt{Mutex<RefCell<T>{}>} + \texttt{critical\_section} untuk concurrency, (c) voting-based N-sensor fusion dengan majority quorum, (d) adaptive lockout berdasarkan fault severity, (e) event-triggered architecture untuk efisiensi CPU, dan (f) power management dengan RTC light-sleep --- dalam satu sistem terintegrasi. Metode ini menjembatani celah antara riset formal verification Rust (J19, J23) dengan implementasi praktis pada embedded system. Versi v3.0 menambahkan skalabilitas N-sensor, klasifikasi severity fault, dan manajemen daya untuk deployment industri nyata.
+Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Rust bare-metal pada ESP32-S3 (Xtensa LX7), (b) \texttt{Mutex<RefCell<T>{}>} + \texttt{critical\_section} untuk concurrency, (c) voting-based N-sensor fusion dengan majority quorum, (d) adaptive lockout berdasarkan fault severity, (e) event-triggered architecture untuk efisiensi CPU, dan (f) power management dengan RTC light-sleep --- dalam satu sistem terintegrasi. Metode ini menjembatani celah antara riset formal verification Rust (J19, J23) dengan implementasi praktis pada embedded system. Versi final menambahkan klasifikasi severity fault berbasis hold-duration dan mekanisme sticky-latch untuk deteksi tombol yang andal.
 
 \end{enumerate}
 
