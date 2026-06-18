@@ -43,6 +43,28 @@ The system reads **3 sensors** (temperature, pressure, vibration), evaluates the
 | **Mutex<RefCell<T>>** | Safe concurrency via `critical_section` |
 | **Hardware-Timed Latency** | Measured via `time.ticks_us()` with microsecond precision |
 
+### Feature Checklist
+
+| Feature | Status |
+|:--------|:------:|
+| Voting-based sensor fusion (≥2/3 quorum) | ✅ |
+| Adaptive lockout (500ms MINOR / 2000ms CRITICAL) | ✅ |
+| Hold-duration severity classification (<5s / ≥5s) | ✅ |
+| Event-triggered polling + sticky latch | ✅ |
+| Sticky-latch button detection (Proteus-optimized) | ✅ |
+| Hardware-timed latency (µs precision) | ✅ |
+| Rust bare-metal `no_std` (esp-hal 1.1.1) | ✅ |
+| `Mutex<RefCell<T>>` + `critical_section` concurrency | ✅ |
+| MicroPython port for Proteus VSM simulation | ✅ |
+| CSV data logging from Proteus debug console | ✅ |
+| GNUPlot 5-panel visualization | ✅ |
+| Python metrics analysis script | ✅ |
+| LaTeX academic report (25 references, 23 pages) | ✅ |
+| GitHub Actions CI/CD pipeline | ✅ |
+| Firmware build guide (docs/) | ✅ |
+| Zero `unsafe` blocks | ✅ |
+| Named constants (zero magic numbers) | ✅ |
+
 ### Key Innovation
 > No existing research combines: **(a)** Rust bare-metal on ESP32-S3, **(b)** `Mutex<RefCell<T>>` + `critical_section` for concurrency, **(c)** voting-based sensor fusion with majority quorum, **(d)** adaptive lockout severity (500ms/2000ms), **(e)** event-triggered architecture with sticky-latch button detection, and **(f)** hold-duration severity classification — in a single integrated system.
 
@@ -108,13 +130,23 @@ The system reads **3 sensors** (temperature, pressure, vibration), evaluates the
 ├── Rust_Simulation/
 │   ├── src/main.rs              # Rust bare-metal (esp-hal 1.1.1)
 │   ├── Cargo.toml               # Dependencies: esp-hal, critical-section
-│   ├── .cargo/config.toml       # Linker config for Xtensa target
-│   ├── simulation_data.dat      # CSV data from Proteus debug console
-│   └── plot*.plt                # GNUPlot visualization scripts
+│   └── .cargo/config.toml       # Linker config for Xtensa target
 │
 ├── Proteus_Simulation/
 │   ├── main.py                  # MicroPython port (Proteus ESP32-S3 VSM)
 │   └── PemKon.pdsprj            # Proteus project file
+│
+├── GNUPLOT/
+│   ├── simulation_data.dat      # CSV data from Proteus debug console
+│   └── plot*.plt                # GNUPlot visualization scripts (5 panels)
+│
+├── python/
+│   └── analyze.py               # Metrics analysis & verification script
+│
+├── docs/
+│   ├── README_FIRMWARE.md       # Firmware build & deploy guide
+│   ├── architecture_diagram.png # System architecture
+│   └── wiring_reference.png     # Proteus schematic
 │
 ├── .github/workflows/
 │   └── ci.yml                   # CI/CD pipeline (check + build + artifact)
