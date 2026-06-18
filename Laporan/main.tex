@@ -19,6 +19,7 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{amsmath}
+\usepackage{multirow}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, calc}
 \usepackage{listings}
@@ -95,7 +96,6 @@
 {\large Ahmad Radhy, S.Si., M.Si.\\[1.5cm]}
 Program Studi Rekayasa Teknologi Instrumentasi\\
 Semester Genap 2025/2026\\[2cm]
-3 Mei 2026
 \end{titlepage}
 
 \tableofcontents
@@ -291,82 +291,88 @@ Metode yang diusulkan memadukan konsep \textit{safe-concurrency} dari bahasa pem
 
     \item \textbf{Fail-Safe Actuator dengan Adaptive Lockout:} Saat fault terdeteksi, katup darurat (GPIO3) segera ditutup. Sistem menerapkan \textit{adaptive lockout} dengan dua tingkat severity: \textbf{Minor} (quorum terpenuhi, redundansi masih tersisa — 500 ms) dan \textbf{Critical} (seluruh N sensor anomali — 2000 ms). Selama periode lockout, katup tetap tertutup meskipun sensor kembali normal, mencegah fenomena \textit{valve bounce} yang berbahaya di lingkungan industri.
 
-    \\item \\textbf{Hardware-Timed Latency:} Latensi antara deteksi anomali dan respons aktuator diukur menggunakan \\textit{hardware timer} TIMG0 (80 MHz APB clock) pada ESP32-S3, bukan nilai \\textit{hardcoded}. Presisi pengukuran mencapai orde mikro-detik ($\\mu$s), memungkinkan evaluasi performa \\textit{real-time} yang akurat.
-\\end{itemize}
+    \item \textbf{Hardware-Timed Latency:} Latensi antara deteksi anomali dan respons aktuator diukur menggunakan \textit{hardware timer} TIMG0 (80 MHz APB clock) pada ESP32-S3, bukan nilai \textit{hardcoded}. Presisi pengukuran mencapai orde mikro-detik ($\mu$s), memungkinkan evaluasi performa \textit{real-time} yang akurat.
+\end{itemize}
+
+\newpage
 
 % ── Sistem Kerja dan Parameter Input ─────────────────────────────────────────
-\\subsection{Sistem Kerja dan Parameter Input}
+\subsection{Sistem Kerja dan Parameter Input}
 
-Sistem beroperasi dalam loop event-triggered dengan interval \\textbf{100 ms}. Berbeda dengan pendekatan fixed-interval konvensional, evaluasi hanya dilakukan saat terjadi \\textit{event} (tekanan tombol) atau transisi state. Saat tidak ada event, sistem berada dalam mode \\textit{idle} dan hanya mencetak \\textit{heartbeat} setiap 10 siklus.
+Sistem beroperasi dalam loop event-triggered dengan interval \textbf{100 ms}. Berbeda dengan pendekatan fixed-interval konvensional, evaluasi hanya dilakukan saat terjadi \textit{event} (tekanan tombol) atau transisi state. Saat tidak ada event, sistem berada dalam mode \textit{idle} dan hanya mencetak \textit{heartbeat} setiap 10 siklus.
 
-\\subsubsection*{Algoritma Utama}
+\subsubsection*{Algoritma Utama}
 
-\\begin{enumerate}
-  \\item \\textbf{Deteksi Tombol (Sticky Latch).} Tombol GPIO15 dibaca setiap 100 ms. Karena klik mouse di Proteus hanya berlangsung beberapa milidetik, sistem menggunakan \\textit{sticky latch}: begitu tombol pernah terbaca HIGH, latch ditahan TRUE hingga fault terproses. Ini menjamin tidak ada klik yang terlewat.
-  \\item \\textbf{Injeksi Sensor.} Saat latch aktif, nilai sensor diinjeksi:
-    \\begin{itemize}
-      \\item Suhu: $25 \
-ightarrow 99^\\circ$C (threshold: $80^\\circ$C)
-      \\item Vibrasi: $5 \
+\begin{enumerate}
+  \item \textbf{Deteksi Tombol (Sticky Latch).} Tombol GPIO15 dibaca setiap 100 ms. Karena klik mouse di Proteus hanya berlangsung beberapa milidetik, sistem menggunakan \textit{sticky latch}: begitu tombol pernah terbaca HIGH, latch ditahan TRUE hingga fault terproses. Ini menjamin tidak ada klik yang terlewat.
+  \item \textbf{Injeksi Sensor.} Saat latch aktif, nilai sensor diinjeksi:
+    \begin{itemize}
+      \item Suhu: $25 \
+ightarrow 99^\circ$C (threshold: $80^\circ$C)
+      \item Vibrasi: $5 \
 ightarrow 9999$ (threshold: $500$)
-      \\item Tekanan: tetap $1013$ hPa jika klik singkat; menjadi $0$ hPa jika ditahan $\\geq 5$ detik
-    \\end{itemize}
-  \\item \\textbf{Voting Redundansi.} Fungsi \\texttt{evaluate\\_redundancy()} menghitung jumlah sensor anomali. Jika $\\geq 2$ dari 3 sensor melewati threshold, sistem mendeklarasikan \\textbf{FAULT}.
-  \\item \\textbf{Klasifikasi Severity.} Durasi tekan tombol menentukan severity:
-    \\begin{itemize}
-      \\item \\textbf{MINOR} ($<5$ detik): 2 sensor anomali (suhu + vibrasi), lockout \\textbf{500 ms}
-      \\item \\textbf{CRITICAL} ($\\geq 5$ detik): 3 sensor anomali (suhu + vibrasi + tekanan), lockout \\textbf{2000 ms}
-    \\end{itemize}
-  \\item \\textbf{Aktuator Fail-Safe.} LED Merah (GPIO3) menyala (valve tertutup), LED Hijau (GPIO4) padam, LED Kuning (GPIO5) menyala selama periode lockout.
-  \\item \\textbf{Countdown Lockout.} Setiap 100 ms, lockout dikurangi. Setelah mencapai 0, sistem otomatis kembali ke NORMAL: sensor di-reset, LED Merah dan Kuning padam, LED Hijau menyala.
-\\end{enumerate}
+      \item Tekanan: tetap $1013$ hPa jika klik singkat; menjadi $0$ hPa jika ditahan $\geq 5$ detik
+    \end{itemize}
+  \item \textbf{Voting Redundansi.} Fungsi \texttt{evaluate\_redundancy()} menghitung jumlah sensor anomali. Jika $\geq 2$ dari 3 sensor melewati threshold, sistem mendeklarasikan \textbf{FAULT}.
+  \item \textbf{Klasifikasi Severity.} Durasi tekan tombol menentukan severity:
+    \begin{itemize}
+      \item \textbf{MINOR} ($<5$ detik): 2 sensor anomali (suhu + vibrasi), lockout \textbf{500 ms}
+      \item \textbf{CRITICAL} ($\geq 5$ detik): 3 sensor anomali (suhu + vibrasi + tekanan), lockout \textbf{2000 ms}
+    \end{itemize}
+  \item \textbf{Aktuator Fail-Safe.} LED Merah (GPIO3) menyala (valve tertutup), LED Hijau (GPIO4) padam, LED Kuning (GPIO5) menyala selama periode lockout.
+  \item \textbf{Countdown Lockout.} Setiap 100 ms, lockout dikurangi. Setelah mencapai 0, sistem otomatis kembali ke NORMAL: sensor di-reset, LED Merah dan Kuning padam, LED Hijau menyala.
+\end{enumerate}
 
-\\subsubsection*{Parameter Input Simulasi}
+\newpage
 
-\\begin{table}[H]
-\\centering
-\\caption{Parameter input dan threshold simulasi.}
-\\label{tab:params}
-\\begin{tabular}{|l|c|c|l|}
-\\hline
-\\textbf{Kategori} & \\textbf{Parameter} & \\textbf{Nilai} & \\textbf{Keterangan} \\\\
-\\hline
-\\multirow{3}{*}{Threshold} & Suhu & $>80^\\circ$C & Anomali jika melebihi \\\\
-& Tekanan & $<900$ atau $>1200$ hPa & Anomali jika di luar range \\\\
-& Vibrasi & $>500$ & Anomali jika melebihi \\\\
-\\hline
-\\multirow{3}{*}{Nilai Normal} & Suhu & $25^\\circ$C & Suhu ruang \\\\
-& Tekanan & $1013$ hPa & Tekanan atmosfer standar \\\\
-& Vibrasi & $5$ & Tanpa getaran \\\\
-\\hline
-\\multirow{3}{*}{Nilai Injeksi} & Suhu & $99^\\circ$C & Melebihi threshold $80^\\circ$C \\\\
-& Tekanan (CRITICAL) & $0$ hPa & Di luar range $900$--$1200$ \\\\
-& Vibrasi & $9999$ & Melebihi threshold $500$ \\\\
-\\hline
-\\multirow{4}{*}{Timing} & Poll interval & $100$ ms & Kecepatan pembacaan \\\\
-& Hold threshold & $5$ detik & Batas MINOR vs CRITICAL \\\\
-& Lockout MINOR & $500$ ms & 5 iterasi \\\\
-& Lockout CRITICAL & $2000$ ms & 20 iterasi \\\\
-\\hline
-\\multirow{2}{*}{Voting} & Quorum & $\\geq 2/3$ & Mayoritas sensor anomali \\\\
-& Redundansi & $1$ sensor & 1 sensor rusak masih ditoleransi \\\\
-\\hline
-\\end{tabular}
-\\end{table}
+\subsubsection*{Parameter Input Simulasi}
 
-\\subsubsection*{Skenario Pengujian}
+\begin{table}[H]
+\centering
+\caption{Parameter input dan threshold simulasi.}
+\label{tab:params}
+\begin{tabular}{|l|c|c|l|}
+\hline
+\textbf{Kategori} & \textbf{Parameter} & \textbf{Nilai} & \textbf{Keterangan} \\
+\hline
+\multirow{3}{*}{Threshold} & Suhu & $>80^\circ$C & Anomali jika melebihi \\
+& Tekanan & $<900$ atau $>1200$ hPa & Anomali jika di luar range \\
+& Vibrasi & $>500$ & Anomali jika melebihi \\
+\hline
+\multirow{3}{*}{Nilai Normal} & Suhu & $25^\circ$C & Suhu ruang \\
+& Tekanan & $1013$ hPa & Tekanan atmosfer standar \\
+& Vibrasi & $5$ & Tanpa getaran \\
+\hline
+\multirow{3}{*}{Nilai Injeksi} & Suhu & $99^\circ$C & Melebihi threshold $80^\circ$C \\
+& Tekanan (CRITICAL) & $0$ hPa & Di luar range $900$--$1200$ \\
+& Vibrasi & $9999$ & Melebihi threshold $500$ \\
+\hline
+\multirow{4}{*}{Timing} & Poll interval & $100$ ms & Kecepatan pembacaan \\
+& Hold threshold & $5$ detik & Batas MINOR vs CRITICAL \\
+& Lockout MINOR & $500$ ms & 5 iterasi \\
+& Lockout CRITICAL & $2000$ ms & 20 iterasi \\
+\hline
+\multirow{2}{*}{Voting} & Quorum & $\geq 2/3$ & Mayoritas sensor anomali \\
+& Redundansi & $1$ sensor & 1 sensor rusak masih ditoleransi \\
+\hline
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+\subsubsection*{Skenario Pengujian}
 
 Pengujian dilakukan dengan dua skenario untuk membuktikan mekanisme adaptive lockout:
 
-\\begin{enumerate}
-  \\item \\textbf{Skenario MINOR — Klik Singkat ($<5$ detik).} Tombol ditekan dan segera dilepas. Sistem mendeteksi suhu $99^\\circ$C dan vibrasi $9999$ (2 sensor anomali). Tekanan tetap $1013$ hPa (normal). Voting memutuskan MINOR fault. Lockout berlangsung 500 ms (5 iterasi). LED Merah dan Kuning menyala, lalu padam setelah lockout selesai. Sistem kembali ke NORMAL.
-  \\item \\textbf{Skenario CRITICAL — Tahan $\\geq 5$ detik.} Tombol ditekan dan ditahan selama $\\geq 5$ detik. Pada detik ke-5, counter hold\\_count mencapai 50 siklus, dan sistem menginjeksi tekanan menjadi $0$ hPa. Kini ketiga sensor anomali. Voting memutuskan CRITICAL fault. Lockout berlangsung 2000 ms (20 iterasi). LED Merah dan Kuning menyala selama 2 detik penuh, membuktikan perbedaan durasi dengan MINOR.
-\\end{enumerate}
+\begin{enumerate}
+  \item \textbf{Skenario MINOR — Klik Singkat ($<5$ detik).} Tombol ditekan dan segera dilepas. Sistem mendeteksi suhu $99^\circ$C dan vibrasi $9999$ (2 sensor anomali). Tekanan tetap $1013$ hPa (normal). Voting memutuskan MINOR fault. Lockout berlangsung 500 ms (5 iterasi). LED Merah dan Kuning menyala, lalu padam setelah lockout selesai. Sistem kembali ke NORMAL.
+  \item \textbf{Skenario CRITICAL — Tahan $\geq 5$ detik.} Tombol ditekan dan ditahan selama $\geq 5$ detik. Pada detik ke-5, counter hold\_count mencapai 50 siklus, dan sistem menginjeksi tekanan menjadi $0$ hPa. Kini ketiga sensor anomali. Voting memutuskan CRITICAL fault. Lockout berlangsung 2000 ms (20 iterasi). LED Merah dan Kuning menyala selama 2 detik penuh, membuktikan perbedaan durasi dengan MINOR.
+\end{enumerate}
 
-\\vspace{0.5cm}
+\newpage
 
 % ═══════════════════════════════════════════════════════════════════════════════
-\\section{Simulasi dan Hasil}
+\section{Simulasi dan Hasil}
 % ═══════════════════════════════════════════════════════════════════════════════
 
 % sections/simulasi.tex — Simulasi dan Hasil
@@ -431,7 +437,7 @@ GPIO15 & Input Digital & Push-button + 10k$\Omega$ pull-down & Fault injection \
   \label{fig:proteus}
 \end{figure}
 
-\newpage
+\vspace{0.3cm}
 
 \subsection{Kode Sumber Utama (Rust)}
 
@@ -464,6 +470,8 @@ static STATE: Mutex<RefCell<SystemState>> =
     Mutex::new(RefCell::new(SystemState::default()));
 \end{lstlisting}
 
+\newpage
+
 \begin{lstlisting}[caption={Voting-based redundancy dengan named struct return (bukan bare tuple).}]
 /// Hasil evaluasi -- named struct untuk self-documenting API
 #[derive(Debug)]
@@ -487,7 +495,7 @@ fn evaluate_sensor_redundancy(temp: u32, press: u32, vib: u32)
 }
 \end{lstlisting}
 
-\vspace{2cm}
+\newpage
 
 \subsection{Data dan Plot GNUPlot}
 

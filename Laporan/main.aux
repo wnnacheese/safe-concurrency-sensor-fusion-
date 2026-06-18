@@ -25,42 +25,45 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Flowchart algoritma metode Safe-Concurrency Multi-Sensor Fusion.}}{9}{figure.caption.3}\protected@file@percent }
 \newlabel{fig:flowchart}{{2}{9}{Flowchart algoritma metode Safe-Concurrency Multi-Sensor Fusion}{figure.caption.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Deskripsi Metode}{10}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Simulasi dan Hasil}{10}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Alat dan Perangkat Lunak}{10}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Rangkaian Simulasi}{11}{subsection.3.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Pin mapping ESP32-S3 pada rangkaian simulasi Proteus.}}{11}{table.caption.4}\protected@file@percent }
-\newlabel{tab:pinmap}{{2}{11}{Pin mapping ESP32-S3 pada rangkaian simulasi Proteus}{table.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Rangkaian simulasi di Proteus dalam dua state berbeda. (a) Fault aktif --- valve tertutup. (b) Lockout aktif --- valve tetap tertutup selama 2000 ms.}}{11}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:proteus}{{3}{11}{Rangkaian simulasi di Proteus dalam dua state berbeda. (a) Fault aktif --- valve tertutup. (b) Lockout aktif --- valve tetap tertutup selama 2000 ms}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Kode Sumber Utama (Rust)}{12}{subsection.3.3}\protected@file@percent }
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces Konstanta bernama dan shared state dilindungi Mutex (zero-magic-number).}}{12}{lstlisting.1}\protected@file@percent }
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}{\ignorespaces Voting-based redundancy dengan named struct return (bukan bare tuple).}}{12}{lstlisting.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Data dan Plot GNUPlot}{13}{subsection.3.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari Virtual Terminal Proteus.}}{13}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:gnuplot}{{4}{13}{Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari Virtual Terminal Proteus}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Analisis Kuantitatif}{14}{subsection.3.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Ringkasan hasil pengujian simulasi.}}{14}{table.caption.7}\protected@file@percent }
-\newlabel{tab:results}{{3}{14}{Ringkasan hasil pengujian simulasi}{table.caption.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Visualisasi Lanjutan}{15}{subsection.3.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Timeline status sistem dengan region berwarna. Hijau = fase normal, merah/oranye = siklus fault-lockout. Pola berulang menunjukkan determinisme sistem saat tombol ditekan secara kontinu.}}{15}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:timeline}{{5}{15}{Timeline status sistem dengan region berwarna. Hijau = fase normal, merah/oranye = siklus fault-lockout. Pola berulang menunjukkan determinisme sistem saat tombol ditekan secara kontinu}{figure.caption.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Matriks keputusan voting per-sensor. Panel atas: suhu ($>80^\circ $C). Panel tengah: tekanan ($<900$ atau $>1200$ hPa). Panel bawah: vibrasi ($>500$). Terlihat bahwa tekanan tetap normal sepanjang simulasi, sehingga fault hanya dideklarasikan ketika suhu \textit  {dan} vibrasi melewati threshold secara bersamaan (2 dari 3 sensor).}}{15}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:voting}{{6}{15}{Matriks keputusan voting per-sensor. Panel atas: suhu ($>80^\circ $C). Panel tengah: tekanan ($<900$ atau $>1200$ hPa). Panel bawah: vibrasi ($>500$). Terlihat bahwa tekanan tetap normal sepanjang simulasi, sehingga fault hanya dideklarasikan ketika suhu \textit {dan} vibrasi melewati threshold secara bersamaan (2 dari 3 sensor)}{figure.caption.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Perbandingan metode kami terhadap tiga referensi kunci (J14, J17, J21) pada enam dimensi: memory safety, concurrency model, sensor fusion, fail-safe mechanism, latency precision, dan dokumentasi. Metode kami unggul di seluruh dimensi.}}{16}{figure.caption.10}\protected@file@percent }
-\newlabel{fig:comparison}{{7}{16}{Perbandingan metode kami terhadap tiga referensi kunci (J14, J17, J21) pada enam dimensi: memory safety, concurrency model, sensor fusion, fail-safe mechanism, latency precision, dan dokumentasi. Metode kami unggul di seluruh dimensi}{figure.caption.10}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Analisis latensi deteksi fault. Latensi terukur 15~$\mu $s (garis hijau) berada di atas safety threshold 5~$\mu $s (garis merah). Perbedaan ini disebabkan oleh overhead interpreter MicroPython pada simulasi Proteus; implementasi Rust bare-metal pada hardware fisik diprediksikan mencapai $<5$~$\mu $s berdasarkan resolusi TIMG0 (12.5 ns/tick).}}{16}{figure.caption.11}\protected@file@percent }
-\newlabel{fig:latency}{{8}{16}{Analisis latensi deteksi fault. Latensi terukur 15~$\mu $s (garis hijau) berada di atas safety threshold 5~$\mu $s (garis merah). Perbedaan ini disebabkan oleh overhead interpreter MicroPython pada simulasi Proteus; implementasi Rust bare-metal pada hardware fisik diprediksikan mencapai $<5$~$\mu $s berdasarkan resolusi TIMG0 (12.5 ns/tick)}{figure.caption.11}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Formalisasi Matematis}{17}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Definisi Fungsi Voting}{17}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Finite State Machine (FSM)}{17}{subsection.4.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Tabel transisi FSM deterministik sistem fail-safe.}}{17}{table.caption.12}\protected@file@percent }
-\newlabel{tab:fsm}{{4}{17}{Tabel transisi FSM deterministik sistem fail-safe}{table.caption.12}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Metrik Latensi}{17}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Keunggulan Metode}{18}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Dokumentasi GitHub dan LinkedIn}{19}{section.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Bukti publikasi LinkedIn dengan tagar \texttt  {\#teknikInstrumentasi}.}}{19}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:linkedin}{{9}{19}{Bukti publikasi LinkedIn dengan tagar \texttt {\#teknikInstrumentasi}}{figure.caption.13}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Kesimpulan}{20}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Sistem Kerja dan Parameter Input}{11}{subsection.2.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Parameter input dan threshold simulasi.}}{12}{table.caption.6}\protected@file@percent }
+\newlabel{tab:params}{{2}{12}{Parameter input dan threshold simulasi}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Simulasi dan Hasil}{13}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Alat dan Perangkat Lunak}{13}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Rangkaian Simulasi}{13}{subsection.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Pin mapping ESP32-S3 pada rangkaian simulasi Proteus.}}{13}{table.caption.8}\protected@file@percent }
+\newlabel{tab:pinmap}{{3}{13}{Pin mapping ESP32-S3 pada rangkaian simulasi Proteus}{table.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Rangkaian simulasi di Proteus dalam dua state berbeda. (a) Fault aktif --- valve tertutup. (b) Lockout aktif --- valve tetap tertutup selama 2000 ms.}}{14}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:proteus}{{3}{14}{Rangkaian simulasi di Proteus dalam dua state berbeda. (a) Fault aktif --- valve tertutup. (b) Lockout aktif --- valve tetap tertutup selama 2000 ms}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Kode Sumber Utama (Rust)}{14}{subsection.3.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces Konstanta bernama dan shared state dilindungi Mutex (zero-magic-number).}}{14}{lstlisting.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}{\ignorespaces Voting-based redundancy dengan named struct return (bukan bare tuple).}}{15}{lstlisting.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Data dan Plot GNUPlot}{16}{subsection.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari debug console Proteus.}}{16}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:gnuplot}{{4}{16}{Grafik hasil simulasi 3-panel: (atas) pembacaan sensor, (tengah) recovery latency, (bawah) status sistem. Data direkam langsung dari debug console Proteus}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Analisis Kuantitatif}{17}{subsection.3.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Ringkasan hasil pengujian simulasi.}}{17}{table.caption.11}\protected@file@percent }
+\newlabel{tab:results}{{4}{17}{Ringkasan hasil pengujian simulasi}{table.caption.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Visualisasi Lanjutan}{18}{subsection.3.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Timeline status sistem dengan region berwarna. Hijau = fase normal, merah/oranye = siklus fault-lockout. Pola berulang menunjukkan determinisme sistem saat tombol ditekan secara kontinu.}}{18}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:timeline}{{5}{18}{Timeline status sistem dengan region berwarna. Hijau = fase normal, merah/oranye = siklus fault-lockout. Pola berulang menunjukkan determinisme sistem saat tombol ditekan secara kontinu}{figure.caption.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Matriks keputusan voting per-sensor. Panel atas: suhu ($>80^\circ $C). Panel tengah: tekanan ($<900$ atau $>1200$ hPa). Panel bawah: vibrasi ($>500$). Terlihat bahwa tekanan tetap normal sepanjang simulasi, sehingga fault hanya dideklarasikan ketika suhu \textit  {dan} vibrasi melewati threshold secara bersamaan (2 dari 3 sensor).}}{18}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:voting}{{6}{18}{Matriks keputusan voting per-sensor. Panel atas: suhu ($>80^\circ $C). Panel tengah: tekanan ($<900$ atau $>1200$ hPa). Panel bawah: vibrasi ($>500$). Terlihat bahwa tekanan tetap normal sepanjang simulasi, sehingga fault hanya dideklarasikan ketika suhu \textit {dan} vibrasi melewati threshold secara bersamaan (2 dari 3 sensor)}{figure.caption.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Perbandingan metode kami terhadap tiga referensi kunci (J14, J17, J21) pada enam dimensi: memory safety, concurrency model, sensor fusion, fail-safe mechanism, latency precision, dan dokumentasi. Metode kami unggul di seluruh dimensi.}}{19}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:comparison}{{7}{19}{Perbandingan metode kami terhadap tiga referensi kunci (J14, J17, J21) pada enam dimensi: memory safety, concurrency model, sensor fusion, fail-safe mechanism, latency precision, dan dokumentasi. Metode kami unggul di seluruh dimensi}{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Analisis latensi deteksi fault. Latensi terukur 15~$\mu $s (garis hijau) berada di atas safety threshold 5~$\mu $s (garis merah). Perbedaan ini disebabkan oleh overhead interpreter MicroPython pada simulasi Proteus; implementasi Rust bare-metal pada hardware fisik diprediksikan mencapai $<5$~$\mu $s berdasarkan resolusi TIMG0 (12.5 ns/tick).}}{19}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:latency}{{8}{19}{Analisis latensi deteksi fault. Latensi terukur 15~$\mu $s (garis hijau) berada di atas safety threshold 5~$\mu $s (garis merah). Perbedaan ini disebabkan oleh overhead interpreter MicroPython pada simulasi Proteus; implementasi Rust bare-metal pada hardware fisik diprediksikan mencapai $<5$~$\mu $s berdasarkan resolusi TIMG0 (12.5 ns/tick)}{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Formalisasi Matematis}{20}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Definisi Fungsi Voting}{20}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Finite State Machine (FSM)}{20}{subsection.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Tabel transisi FSM deterministik sistem fail-safe.}}{20}{table.caption.16}\protected@file@percent }
+\newlabel{tab:fsm}{{5}{20}{Tabel transisi FSM deterministik sistem fail-safe}{table.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Metrik Latensi}{20}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Keunggulan Metode}{21}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Dokumentasi GitHub dan LinkedIn}{22}{section.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Bukti publikasi LinkedIn dengan tagar \texttt  {\#teknikInstrumentasi}.}}{22}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:linkedin}{{9}{22}{Bukti publikasi LinkedIn dengan tagar \texttt {\#teknikInstrumentasi}}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Kesimpulan}{23}{section.7}\protected@file@percent }
 \bibcite{j01}{1}
 \bibcite{j02}{2}
 \bibcite{j03}{3}
@@ -86,4 +89,4 @@
 \bibcite{j23}{23}
 \bibcite{j24}{24}
 \bibcite{j25}{25}
-\gdef \@abspage@last{24}
+\gdef \@abspage@last{26}

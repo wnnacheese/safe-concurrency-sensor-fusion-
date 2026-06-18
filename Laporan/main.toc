@@ -5,17 +5,18 @@
 \contentsline {subsection}{\numberline {2.1}Judul Metode}{8}{subsection.2.1}%
 \contentsline {subsection}{\numberline {2.2}Flowchart}{9}{subsection.2.2}%
 \contentsline {subsection}{\numberline {2.3}Deskripsi Metode}{10}{subsection.2.3}%
-\contentsline {section}{\numberline {3}Simulasi dan Hasil}{10}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Alat dan Perangkat Lunak}{10}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Rangkaian Simulasi}{11}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Kode Sumber Utama (Rust)}{12}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}Data dan Plot GNUPlot}{13}{subsection.3.4}%
-\contentsline {subsection}{\numberline {3.5}Analisis Kuantitatif}{14}{subsection.3.5}%
-\contentsline {subsection}{\numberline {3.6}Visualisasi Lanjutan}{15}{subsection.3.6}%
-\contentsline {section}{\numberline {4}Formalisasi Matematis}{17}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Definisi Fungsi Voting}{17}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Finite State Machine (FSM)}{17}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Metrik Latensi}{17}{subsection.4.3}%
-\contentsline {section}{\numberline {5}Keunggulan Metode}{18}{section.5}%
-\contentsline {section}{\numberline {6}Dokumentasi GitHub dan LinkedIn}{19}{section.6}%
-\contentsline {section}{\numberline {7}Kesimpulan}{20}{section.7}%
+\contentsline {subsection}{\numberline {2.4}Sistem Kerja dan Parameter Input}{11}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Simulasi dan Hasil}{13}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Alat dan Perangkat Lunak}{13}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Rangkaian Simulasi}{13}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Kode Sumber Utama (Rust)}{14}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Data dan Plot GNUPlot}{16}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Analisis Kuantitatif}{17}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Visualisasi Lanjutan}{18}{subsection.3.6}%
+\contentsline {section}{\numberline {4}Formalisasi Matematis}{20}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Definisi Fungsi Voting}{20}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Finite State Machine (FSM)}{20}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Metrik Latensi}{20}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Keunggulan Metode}{21}{section.5}%
+\contentsline {section}{\numberline {6}Dokumentasi GitHub dan LinkedIn}{22}{section.6}%
+\contentsline {section}{\numberline {7}Kesimpulan}{23}{section.7}%
