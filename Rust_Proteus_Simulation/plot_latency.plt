@@ -41,10 +41,10 @@ set label 5 "MicroPython ticks_us() = 15 us" at 48,11.5 center textcolor rgb "#c
 set label 6 "Rust TIMG0 HW timer    = ~1 us" at 48,10 center textcolor rgb "#cdd6f4" font "Arial,9"
 set label 7 "Overhead ratio: 15x" at 48,8.7 center textcolor rgb "#fab387" font "Arial,10"
 
-# Plot fault event latencies as impulses
-plot 'simulation_data.dat' using 1:($6==1 ? $5 : 1/0) with impulses \
+# Plot fault event latencies (v3.0: parse text status column, filter "FAULT_DETECTED")
+plot 'simulation_data.dat' using 1:(strstrt(stringcolumn(6), "FAULT_DETECTED") ? $5 : 1/0) with impulses \
         lc rgb "#89b4fa" lw 5 title "Measured Latency (FAULT events)", \
-     '' using 1:($6==1 ? $5 : 1/0) with points \
+     '' using 1:(strstrt(stringcolumn(6), "FAULT_DETECTED") ? $5 : 1/0) with points \
         lc rgb "#f5c2e7" pt 7 ps 1.8 title "Data Points (15 us each)"
 
 print "Output saved: latency_analysis.png"

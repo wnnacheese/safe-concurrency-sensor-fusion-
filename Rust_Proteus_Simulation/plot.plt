@@ -64,12 +64,18 @@ set format x "%g"
 set yrange [-0.3:3.5]
 set ytics ("NORMAL" 0, "FAULT" 1, "LOCKOUT" 2, "CLEARED" 3) textcolor rgb "#cdd6f4"
 
-plot 'simulation_data.dat' using 1:6 with steps \
+# Panel 3: Parse text status column for v3.0 CSV format
+# Status text → numeric: "NORMAL*"=0, "FAULT_DETECTED*"=1, "LOCKOUT_ACTIVE*"=2, "LOCKOUT_CLEARED*"=3
+plot 'simulation_data.dat' using 1:(strstrt(stringcolumn(6), "FAULT") ? 1 : \
+        strstrt(stringcolumn(6), "LOCKOUT_ACTIVE") ? 2 : \
+        strstrt(stringcolumn(6), "LOCKOUT_CLEARED") ? 3 : 0) with steps \
         lc rgb "#fab387" lw 3 title "System State", \
-     '' using 1:6 with points \
+     '' using 1:(strstrt(stringcolumn(6), "FAULT") ? 1 : \
+        strstrt(stringcolumn(6), "LOCKOUT_ACTIVE") ? 2 : \
+        strstrt(stringcolumn(6), "LOCKOUT_CLEARED") ? 3 : 0) with points \
         lc rgb "#f5c2e7" pt 7 ps 0.7 notitle
 
 unset multiplot
 
 print "Output saved: sensor_fusion_analysis.png"
-print "3 panels generated: Sensors, Latency, Status Timeline"
+print "3 panels generated: Sensors, Latency, Status Timeline (v3.0 text-format compatible)"

@@ -42,9 +42,14 @@ set label 12 "Repeating fault-lockout cycles (button held)" at 40,3.5 center tex
 
 set key textcolor rgb "#cdd6f4" font "Arial,11" box lc rgb "#45475a" opaque bottom right
 
-plot 'simulation_data.dat' using 1:6 with steps \
+# Plot state timeline (v3.0: parse text status column)
+plot 'simulation_data.dat' using 1:(strstrt(stringcolumn(6), "FAULT") ? 1 : \
+        strstrt(stringcolumn(6), "LOCKOUT_ACTIVE") ? 2 : \
+        strstrt(stringcolumn(6), "LOCKOUT_CLEARED") ? 3 : 0) with steps \
         lc rgb "#f9e2af" lw 3 title "State Transition", \
-     '' using 1:6 with points \
+     '' using 1:(strstrt(stringcolumn(6), "FAULT") ? 1 : \
+        strstrt(stringcolumn(6), "LOCKOUT_ACTIVE") ? 2 : \
+        strstrt(stringcolumn(6), "LOCKOUT_CLEARED") ? 3 : 0) with points \
         lc rgb "#cdd6f4" pt 7 ps 0.9 notitle
 
 print "Output saved: state_timeline.png"
