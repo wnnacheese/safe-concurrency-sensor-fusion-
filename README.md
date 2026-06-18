@@ -194,19 +194,19 @@ cargo +esp build --release -Zbuild-std=core,alloc --target xtensa-esp32s3-none-e
 ### GNUPlot Visualizations
 
 #### 1. Multi-Sensor Fusion Overview (3-Panel Plot)
-![Sensor Fusion Analysis](Rust_Simulation/sensor_fusion_analysis.png)
+![Sensor Fusion Analysis](GNUPLOT/sensor_fusion_analysis.png)
 
 #### 2. Detailed Fault Detection Latency Analysis
-![Latency Analysis](Rust_Simulation/latency_analysis.png)
+![Latency Analysis](GNUPLOT/latency_analysis.png)
 
 #### 3. System State Timeline (Color-Coded Regions)
-![State Timeline](Rust_Simulation/state_timeline.png)
+![State Timeline](GNUPLOT/state_timeline.png)
 
 #### 4. Voting Decision Matrix Heatmap
-![Voting Heatmap](Rust_Simulation/voting_heatmap.png)
+![Voting Heatmap](GNUPLOT/voting_heatmap.png)
 
 #### 5. Method Comparison vs. Literature
-![Method Comparison](Rust_Simulation/method_comparison.png)
+![Method Comparison](GNUPLOT/method_comparison.png)
 
 ---
 
