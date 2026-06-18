@@ -1,7 +1,0 @@
-D:\Win\Doc\MAHASISWA\4\PemKom\ETS\Rust_Proteus_Simulation\target\xtensa-esp32s3-none-elf\debug\deps\embassy_usb_driver-008ba7a73894e7a4.d: C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\lib.rs C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\host.rs C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\../README.md
-
-D:\Win\Doc\MAHASISWA\4\PemKom\ETS\Rust_Proteus_Simulation\target\xtensa-esp32s3-none-elf\debug\deps\libembassy_usb_driver-008ba7a73894e7a4.rmeta: C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\lib.rs C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\host.rs C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\../README.md
-
-C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\lib.rs:
-C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\host.rs:
-C:\Users\WnnaCheese\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\embassy-usb-driver-0.2.2\src\../README.md:

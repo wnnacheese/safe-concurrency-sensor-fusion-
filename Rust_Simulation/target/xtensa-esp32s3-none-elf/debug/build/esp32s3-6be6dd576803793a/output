@@ -1,3 +1,0 @@
-cargo:rustc-link-search=D:\Win\Doc\MAHASISWA\4\PemKom\ETS\Rust_Proteus_Simulation\target\xtensa-esp32s3-none-elf\debug\build\esp32s3-6be6dd576803793a\out
-cargo:rerun-if-changed=device.x
-cargo:rerun-if-changed=build.rs
