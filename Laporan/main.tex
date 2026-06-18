@@ -81,16 +81,16 @@
 \vspace*{2cm}
 {\LARGE\bfseries EVALUASI TENGAH SEMESTER\\[0.3cm]}
 {\Large MATA KULIAH PEMROGRAMAN KONTROLLER\\[0.5cm]}
-{\\large BAGIAN B: STUDI LITERATUR \\& SIMULASI METODE BARU\\\\[1.5cm]}
-\
-ule{\\linewidth}{0.5pt}\\\\[0.5cm]
-{\\huge\\bfseries Safe-Concurrency for\\\\Multi-Sensor Fusion in\\\\Industrial Safety-Critical Systems\\\\[0.2cm]}
-{\\Large\\bfseries v3.0 — N-Sensor + Adaptive Lockout + Event-Triggered + Power Mgmt\\\\[0.5cm]}
-\
-ule{\\linewidth}{0.5pt}\\\\[1.5cm]
+{\large BAGIAN B: STUDI LITERATUR \& SIMULASI METODE BARU\\[1.5cm]}
+
+\rule{\linewidth}{0.5pt}\\[0.5cm]
+{\huge\bfseries Safe-Concurrency for\\Multi-Sensor Fusion in\\Industrial Safety-Critical Systems\\[0.2cm]}
+{\Large\bfseries N-Sensor + Adaptive Lockout + Event-Triggered\\[0.5cm]}
+
+\rule{\linewidth}{0.5pt}\\[1.5cm]
 {\large Disusun oleh:\\[0.5cm]}
 {\Large Abdurrauf Almutawakkil\\NRP:  2042241115\\[0.3cm]}
-{\large Kelas: 4C\\[0,5cm]}
+{\large Kelas: 4C\\[0.5cm]}
 {\large Dosen Pengampu:\\[0.3cm]}
 {\large Ahmad Radhy, S.Si., M.Si.\\[1.5cm]}
 Program Studi Rekayasa Teknologi Instrumentasi\\
@@ -176,8 +176,7 @@ Semester Genap 2025/2026\\[2cm]
 \end{longtable}
 \end{small}
 
-\vspace{0.3cm}
-% sections/future_work.tex — Daftar Future Work yang Diintegrasikan (1 per jurnal)
+\newpage
 
 \subsection{Daftar \textit{Future Work} yang Diintegrasikan}
 
@@ -237,6 +236,8 @@ Berikut adalah \textit{future work} dari masing-masing 25 jurnal acuan:
 
 \end{description}
 
+\newpage
+
 \noindent\textbf{Sintesis:} Dari 25 tema \textit{future work} di atas, kami mengidentifikasi celah riset yang belum pernah diuji coba secara terintegrasi: \textbf{penggunaan fitur safe-concurrency Rust untuk mengimplementasikan voting-based multi-sensor fusion dengan hardware-timed fail-safe actuator pada bare-metal ESP32-S3}. Kombinasi ini memadukan:
 \begin{itemize}
   \item FW12 : hardware-software co-design fault-tolerant fusion
@@ -288,7 +289,7 @@ Metode yang diusulkan memadukan konsep \textit{safe-concurrency} dari bahasa pem
 
     \item \textbf{Voting-Based Redundancy:} Fungsi \texttt{evaluate\_sensor\_redundancy()} menerima pembacaan ketiga sensor dan menghitung jumlah sensor yang menunjukkan anomali. Jika $\geq 2$ sensor mengindikasikan nilai di luar threshold (suhu $> 80$°C, tekanan $< 900$ atau $> 1200$ hPa, vibrasi $> 500$), maka sistem mendeklarasikan \textit{fault} dan memicu aktuator darurat.
 
-    \\item \\textbf{Fail-Safe Actuator dengan Adaptive Lockout:} Saat fault terdeteksi, katup darurat (GPIO2) segera ditutup. Sistem menerapkan \\textit{adaptive lockout} dengan dua tingkat severity: \\textbf{Minor} (quorum terpenuhi, redundansi masih tersisa — 500 ms) dan \\textbf{Critical} (seluruh N sensor anomali — 2000 ms). Selama periode lockout, katup tetap tertutup meskipun sensor kembali normal, mencegah fenomena \\textit{valve bounce} yang berbahaya di lingkungan industri.
+    \item \textbf{Fail-Safe Actuator dengan Adaptive Lockout:} Saat fault terdeteksi, katup darurat (GPIO3) segera ditutup. Sistem menerapkan \textit{adaptive lockout} dengan dua tingkat severity: \textbf{Minor} (quorum terpenuhi, redundansi masih tersisa — 500 ms) dan \textbf{Critical} (seluruh N sensor anomali — 2000 ms). Selama periode lockout, katup tetap tertutup meskipun sensor kembali normal, mencegah fenomena \textit{valve bounce} yang berbahaya di lingkungan industri.
 
     \item \textbf{Hardware-Timed Latency:} Latensi antara deteksi anomali dan respons aktuator diukur menggunakan \textit{hardware timer} TIMG0 (80 MHz APB clock) pada ESP32-S3, bukan nilai \textit{hardcoded}. Presisi pengukuran mencapai orde mikro-detik ($\mu$s), memungkinkan evaluasi performa \textit{real-time} yang akurat.
 \end{itemize}
@@ -322,9 +323,7 @@ Rangkaian simulasi di Proteus terdiri dari komponen berikut (seluruh LED menggun
 \hline
 \textbf{Pin ESP32-S3} & \textbf{Fungsi} & \textbf{Komponen} & \textbf{Keterangan} \\
 \hline
-GPIO1 (TX0) & Serial Output & Virtual Terminal (RXD) & 115200 baud, 8N1 \\
-\hline
-GPIO2 & LED Merah & Resistor 220$\Omega$ + LED-RED & Valve tertutup (fault) \\
+GPIO3 & LED Merah & Resistor 220$\Omega$ + LED-RED & Valve tertutup (fault) \\
 \hline
 GPIO4 & LED Hijau & Resistor 220$\Omega$ + LED-GREEN & Sistem normal \\
 \hline
@@ -338,11 +337,10 @@ GPIO15 & Input Digital & Push-button + 10k$\Omega$ pull-down & Fault injection \
 \noindent Komponen lengkap rangkaian:
 \begin{enumerate}
   \item \textbf{ESP32-S3} (kategori MicroPython di Proteus) : mikrokontroler utama.
-  \item \textbf{LED Merah} (D1) pada GPIO2 dengan resistor 220$\Omega$ : indikator valve tertutup saat fault.
+  \item \textbf{LED Merah} (D1) pada GPIO3 dengan resistor 220$\Omega$ : indikator valve tertutup saat fault.
   \item \textbf{LED Hijau} (D2) pada GPIO4 dengan resistor 220$\Omega$ : indikator sistem beroperasi normal.
   \item \textbf{LED Kuning} (D3) pada GPIO5 dengan resistor 220$\Omega$ : indikator periode lockout aktif.
   \item \textbf{Push-button} pada GPIO15 dengan pull-down 10k$\Omega$ : tombol fault injection. Saat ditekan, sensor suhu diinjeksi ke 99$^\circ$C dan vibrasi ke 9999 (melebihi threshold), memicu deteksi fault melalui mekanisme voting.
-  \item \textbf{Virtual Terminal} pada TX0 (GPIO1) : monitor output serial UART (115200 baud, format CSV 6 kolom).
 \end{enumerate}
 
 \begin{figure}[H]
@@ -361,6 +359,8 @@ GPIO15 & Input Digital & Push-button + 10k$\Omega$ pull-down & Fault injection \
   \caption{Rangkaian simulasi di Proteus dalam dua state berbeda. (a) Fault aktif --- valve tertutup. (b) Lockout aktif --- valve tetap tertutup selama 2000 ms.}
   \label{fig:proteus}
 \end{figure}
+
+\newpage
 
 \subsection{Kode Sumber Utama (Rust)}
 
@@ -439,8 +439,6 @@ Data hasil simulasi direkam langsung dari output Virtual Terminal Proteus dalam 
 
 \subsection{Analisis Kuantitatif}
 
-Berdasarkan data simulasi yang direkam dari Virtual Terminal Proteus, berikut adalah analisis kuantitatif performa sistem:
-
 \begin{table}[H]
 \centering
 \caption{Ringkasan hasil pengujian simulasi.}
@@ -449,26 +447,34 @@ Berdasarkan data simulasi yang direkam dari Virtual Terminal Proteus, berikut ad
 \hline
 \textbf{Parameter} & \textbf{Nilai Terukur} \\
 \hline
-Jumlah iterasi normal & Variabel (tergantung durasi simulasi) \\
+Jumlah siklus pengujian & 319 iterasi \\
 \hline
-Jumlah fault terdeteksi & 1 per sesi tombol ditekan \\
+Jumlah fault MINOR & 6 (klik singkat, $<$5 detik) \\
 \hline
-Jumlah sensor anomali saat fault & 2 dari 3 (suhu + vibrasi) \\
+Jumlah fault CRITICAL & 3 (tahan $>$5 detik) \\
 \hline
-Durasi lockout & 500 ms (Minor) / 2000 ms (Critical) \\\\
+Sensor anomali MINOR & 2 dari 3 (suhu + vibrasi) \\
 \hline
-Interval polling & 500 ms \\
+Sensor anomali CRITICAL & 3 dari 3 (suhu + vibrasi + tekanan) \\
+\hline
+Durasi lockout MINOR & 500 ms (5 iterasi) \\
+\hline
+Durasi lockout CRITICAL & 2000 ms (20 iterasi) \\
+\hline
+Interval polling & 100 ms \\
 \hline
 \end{tabular}
 \end{table}
 
+
 \noindent\textbf{Interpretasi:}
 \begin{itemize}
   \item \textbf{Deteksi fault:} Saat tombol GPIO15 ditekan, sensor suhu diinjeksi ke 99$^\circ$C (threshold: 80$^\circ$C) dan vibrasi ke 9999 (threshold: 500). Dua dari tiga sensor melewati ambang batas, memenuhi kuorum voting ($\geq 2$), sehingga fault langsung dideklarasikan.
-  \item \textbf{Respons aktuator:} LED Merah (GPIO2) menyala dan LED Hijau (GPIO4) padam secara instan pada siklus polling yang sama dengan deteksi anomali, menunjukkan latensi deteksi-ke-aksi yang sangat rendah.
-  \\item \\textbf{Mekanisme adaptive lockout:} Sistem mengklasifikasikan fault menjadi dua tingkat severity. Minor (2/3 sensor anomali) memicu lockout 500 ms, sementara Critical (3/3 sensor anomali) memicu lockout 2000 ms. LED Kuning (GPIO5) menyala selama periode lockout. Setelah selesai, sistem otomatis kembali normal.
+  \item \textbf{Respons aktuator:} LED Merah (GPIO3) menyala dan LED Hijau (GPIO4) padam secara instan pada siklus polling yang sama dengan deteksi anomali, menunjukkan latensi deteksi-ke-aksi yang sangat rendah.
+  \item \textbf{Mekanisme adaptive lockout:} Sistem mengklasifikasikan fault menjadi dua tingkat severity. Minor (2/3 sensor anomali) memicu lockout 500 ms, sementara Critical (3/3 sensor anomali) memicu lockout 2000 ms. LED Kuning (GPIO5) menyala selama periode lockout. Setelah selesai, sistem otomatis kembali normal.
   \item \textbf{Pencegahan valve bounce:} Mekanisme lockout berhasil mencegah osilasi valve yang berbahaya. Meskipun sensor kembali normal di tengah periode lockout, valve tetap dalam posisi aman (tertutup).
 \end{itemize}
+
 
 \noindent\textbf{Perbandingan dengan literatur:}
 Sistem J14 (Desikan et al., 2025) menggunakan dynamic threshold tanpa mekanisme lockout, sehingga rentan terhadap valve bounce. Sistem J21 (Radovici et al., 2022) mencapai latensi interrupt 3$\times$ lebih cepat menggunakan Rust, namun tidak mengimplementasikan mekanisme sensor fusion. Metode kami menggabungkan kedua keunggulan tersebut: respons aktuator cepat \textit{dan} voting-based redundancy, dalam satu sistem terintegrasi.
@@ -506,6 +512,8 @@ Untuk memberikan gambaran komprehensif terhadap perilaku sistem, empat visualisa
   \caption{Analisis latensi deteksi fault. Latensi terukur 15~$\mu$s (garis hijau) berada di atas safety threshold 5~$\mu$s (garis merah). Perbedaan ini disebabkan oleh overhead interpreter MicroPython pada simulasi Proteus; implementasi Rust bare-metal pada hardware fisik diprediksikan mencapai $<5$~$\mu$s berdasarkan resolusi TIMG0 (12.5 ns/tick).}
   \label{fig:latency}
 \end{figure}
+
+\newpage
 
 % ═══════════════════════════════════════════════════════════════════════════════
 \section{Formalisasi Matematis}
@@ -595,7 +603,7 @@ Berbeda dengan pendekatan software-timing yang umum digunakan (J21, Radovici et 
 Pendekatan J10 (MS-SIAF-Net) menggunakan deep learning untuk sensor fusion, membutuhkan resource komputasi besar. Metode kami menggunakan voting logic sederhana ($\geq 2$ sensor anomali = fault) yang dapat berjalan pada bare-metal MCU tanpa framework ML, memadukan FW17 (real-time embedded) dengan FW12 (hw-sw co-design).
 
 \item \textbf{Orisinalitas Kontribusi.}
-Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Rust bare-metal pada ESP32-S3 (Xtensa LX7), (b) \\texttt{Mutex<RefCell<T>{}>} + \\texttt{critical\\_section} untuk concurrency, (c) voting-based N-sensor fusion dengan majority quorum, (d) adaptive lockout berdasarkan fault severity, (e) event-triggered architecture untuk efisiensi CPU, dan (f) power management dengan RTC light-sleep --- dalam satu sistem terintegrasi. Metode ini menjembatani celah antara riset formal verification Rust (J19, J23) dengan implementasi praktis pada embedded system. Versi v3.0 menambahkan skalabilitas N-sensor, klasifikasi severity fault, dan manajemen daya untuk deployment industri nyata.
+Sejauh penelusuran literatur, belum ada penelitian yang mengkombinasikan: (a) Rust bare-metal pada ESP32-S3 (Xtensa LX7), (b) \texttt{Mutex<RefCell<T>{}>} + \texttt{critical\_section} untuk concurrency, (c) voting-based N-sensor fusion dengan majority quorum, (d) adaptive lockout berdasarkan fault severity, (e) event-triggered architecture untuk efisiensi CPU, dan (f) power management dengan RTC light-sleep --- dalam satu sistem terintegrasi. Metode ini menjembatani celah antara riset formal verification Rust (J19, J23) dengan implementasi praktis pada embedded system. Versi v3.0 menambahkan skalabilitas N-sensor, klasifikasi severity fault, dan manajemen daya untuk deployment industri nyata.
 
 \end{enumerate}
 
