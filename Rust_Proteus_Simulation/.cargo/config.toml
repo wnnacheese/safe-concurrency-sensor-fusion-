@@ -1,10 +1,12 @@
+# Build target untuk ESP32-S3 bare-metal (no_std)
+[build]
+target = "xtensa-esp32s3-none-elf"
+
 [target.xtensa-esp32s3-none-elf]
 rustflags = [
-    "-C", "link-arg=-Tlinkall.x",
+    "-C", "link-arg=-nostartfiles",
+    "-C", "link-arg=-Wl,-Tesp32s3_rom.ld",
 ]
 
 [unstable]
 build-std = ["core", "alloc"]
-
-[env]
-ESP_HAL_PLACE_SPI_DRIVER_IN_RAM = "false"

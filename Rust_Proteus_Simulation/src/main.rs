@@ -386,7 +386,6 @@ fn main() -> ! {
         };
 
         // ── STEP 3: Event-Driven Evaluation ──────────────────────────────
-        // ── STEP 3: Event-Driven Evaluation ──────────────────────────────
         let transition = current_status != prev_status || button_pressed;
 
         if transition || lockout_remaining > 0 {

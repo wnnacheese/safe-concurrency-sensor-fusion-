@@ -1,76 +1,32 @@
-name: CI - ESP32-S3 Rust Build
+name: CI Build
 
 on:
   push:
-    branches: [main, master]
-    paths:
-      - 'Rust_Proteus_Simulation/**'
-      - '.github/workflows/ci.yml'
+    branches: [main]
   pull_request:
-    branches: [main, master]
-    paths:
-      - 'Rust_Proteus_Simulation/**'
-      - '.github/workflows/ci.yml'
-  workflow_dispatch:
-
-env:
-  CARGO_TERM_COLOR: always
+    branches: [main]
 
 jobs:
   build:
-    name: Build & Check (esp-hal v1.1.1)
+    name: Build (xtensa-esp32s3-none-elf)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Rust_Proteus_Simulation
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain (stable)
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install espup (ESP32 Rust toolchain)
-        run: |
-          cargo install espup
-          espup install
-
-      - name: Add targets to PATH
-        run: |
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          echo "$HOME/.rustup/toolchains/esp/xtensa-esp-elf/bin" >> $GITHUB_PATH
-
-      - name: Cache cargo registry & build artifacts
-        uses: actions/cache@v4
+      - name: Install esp-rs toolchain
+        uses: esp-rs/xtensa-toolchain@v1.5
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Rust_Proteus_Simulation/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          default: true
+          ldproxy: true
+          buildtargets: esp32s3
 
-      - name: cargo check (verify compilation)
+      - name: Build (release)
+        working-directory: Rust_Proteus_Simulation
         run: |
-          cargo +esp check \
-            -Zbuild-std=core,alloc \
-            --target xtensa-esp32s3-none-elf
+          cargo build --release -Zbuild-std=core,alloc --target xtensa-esp32s3-none-elf
 
-      - name: cargo build --release
-        run: |
-          cargo +esp build --release \
-            -Zbuild-std=core,alloc \
-            --target xtensa-esp32s3-none-elf
-
-      - name: Verify binary exists
+      - name: Verify binary
+        working-directory: Rust_Proteus_Simulation
         run: |
           ls -lh target/xtensa-esp32s3-none-elf/release/safe-concurrency-sensor-fusion
-          file target/xtensa-esp32s3-none-elf/release/safe-concurrency-sensor-fusion
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: safe-concurrency-sensor-fusion
-          path: Rust_Proteus_Simulation/target/xtensa-esp32s3-none-elf/release/safe-concurrency-sensor-fusion
-          retention-days: 30
