@@ -332,7 +332,7 @@ fn main() -> ! {
 
     // ── Boot Header ──────────────────────────────────────────────────────
     println!("====================================================");
-    println!("  Safe-Concurrency Multi-Sensor Fusion System v3.0");
+    println!("  Safe-Concurrency Multi-Sensor Fusion System");
     println!("  Platform: ESP32-S3 | Rust (no_std, bare-metal)");
     println!("  Framework: esp-hal v1.1.1");
     println!("  Concurrency: Mutex<RefCell<T>> + critical_section");
