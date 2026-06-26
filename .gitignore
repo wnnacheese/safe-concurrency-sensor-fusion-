@@ -4,11 +4,19 @@ target/
 *.log
 *.out
 *.toc
+*.synctex.gz
 *.pdf
+*.drawio.bkp
 build_ppt.js
 package.json
 package-lock.json
 Presentasi_ETS_Final.pptx
+dokum.jpeg
+rustup-init.exe
+
+# Proteus artifacts
+Proteus_Simulation/Project Backups/
+Proteus_Simulation/*.workspace
 
 # File pribadi — jangan di-push ke GitHub
 PANDUAN_PROTEUS.md

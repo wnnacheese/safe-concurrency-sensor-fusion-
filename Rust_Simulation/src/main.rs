@@ -39,18 +39,18 @@
 #![no_std]
 #![no_main]
 
-use esp_backtrace as _;
-use esp_hal::{
-    main,
-    gpio::{Input, InputConfig, Level, Output, OutputConfig, Pull},
-    timer::timg::TimerGroup,
-    delay::Delay,
-    timer::Timer,
-    rtc_cntl::{Rtc, sleep::TimerWakeupSource},
-    Config,
-};
 use core::cell::RefCell;
 use critical_section::Mutex;
+use esp_backtrace as _;
+use esp_hal::{
+    delay::Delay,
+    gpio::{Input, InputConfig, Level, Output, OutputConfig, Pull},
+    main,
+    rtc_cntl::{sleep::TimerWakeupSource, Rtc},
+    timer::timg::TimerGroup,
+    timer::Timer,
+    Config,
+};
 use esp_println::{print, println};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,23 +81,23 @@ const NO_THRESHOLD: u32 = u32::MAX;
 
 /// Lower anomaly threshold per sensor.
 const SENSOR_LOW: [u32; N_SENSORS] = [
-    NO_THRESHOLD,  // [0] TEMP  — hanya check high-bound
-    900,           // [1] PRESS — anomali jika < 900 hPa
-    NO_THRESHOLD,  // [2] VIB   — hanya check high-bound
+    NO_THRESHOLD, // [0] TEMP  — hanya check high-bound
+    900,          // [1] PRESS — anomali jika < 900 hPa
+    NO_THRESHOLD, // [2] VIB   — hanya check high-bound
 ];
 
 /// Upper anomaly threshold per sensor.
 const SENSOR_HIGH: [u32; N_SENSORS] = [
-    80,            // [0] TEMP  — anomali jika > 80°C
-    1200,          // [1] PRESS — anomali jika > 1200 hPa
-    500,           // [2] VIB   — anomali jika > 500 (arb.)
+    80,   // [0] TEMP  — anomali jika > 80°C
+    1200, // [1] PRESS — anomali jika > 1200 hPa
+    500,  // [2] VIB   — anomali jika > 500 (arb.)
 ];
 
 /// Nilai baseline / initial untuk tiap sensor (operasi normal).
 const SENSOR_INITIAL: [u32; N_SENSORS] = [
-    25,            // [0] TEMP  — suhu ruangan
-    1013,          // [1] PRESS — tekanan atmosfer standar
-    5,             // [2] VIB   — vibrasi baseline
+    25,   // [0] TEMP  — suhu ruangan
+    1013, // [1] PRESS — tekanan atmosfer standar
+    5,    // [2] VIB   — vibrasi baseline
 ];
 
 /// Nama sensor untuk output serial (4-5 karakter, uppercase).
@@ -183,8 +183,7 @@ impl SystemState {
 }
 
 /// Global shared state, dilindungi oleh critical-section Mutex.
-static STATE: Mutex<RefCell<SystemState>> =
-    Mutex::new(RefCell::new(SystemState::default()));
+static STATE: Mutex<RefCell<SystemState>> = Mutex::new(RefCell::new(SystemState::default()));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIPE DATA: Hasil Evaluasi Sensor (Named Struct)
@@ -214,8 +213,7 @@ fn evaluate_sensor_redundancy(values: &[u32; N_SENSORS]) -> FaultEvaluation {
         let lo = SENSOR_LOW[i];
         let hi = SENSOR_HIGH[i];
 
-        let is_anomaly = (lo != NO_THRESHOLD && val < lo)
-                      || (hi != NO_THRESHOLD && val > hi);
+        let is_anomaly = (lo != NO_THRESHOLD && val < lo) || (hi != NO_THRESHOLD && val > hi);
 
         if is_anomaly {
             anomaly_count += 1;
@@ -242,17 +240,17 @@ fn update_leds(
     lockout_remaining: u32,
 ) {
     if fault_active {
-        valve_led.set_high();     // Merah ON  = valve tertutup
-        normal_led.set_low();     // Hijau OFF
+        valve_led.set_high(); // Merah ON  = valve tertutup
+        normal_led.set_low(); // Hijau OFF
         if lockout_remaining > 0 {
-            lockout_led.set_high();   // Kuning ON = lockout
+            lockout_led.set_high(); // Kuning ON = lockout
         } else {
             lockout_led.set_low();
         }
     } else {
-        valve_led.set_low();      // Merah OFF = normal
-        normal_led.set_high();    // Hijau ON  = normal
-        lockout_led.set_low();    // Kuning OFF
+        valve_led.set_low(); // Merah OFF = normal
+        normal_led.set_high(); // Hijau ON  = normal
+        lockout_led.set_low(); // Kuning OFF
     }
 }
 
@@ -291,7 +289,10 @@ fn print_sensor_config() {
         } else if hi == NO_THRESHOLD {
             println!("  [{}] {}: < {} → anomaly", i, SENSOR_NAMES[i], lo);
         } else {
-            println!("  [{}] {}: < {} or > {} → anomaly", i, SENSOR_NAMES[i], lo, hi);
+            println!(
+                "  [{}] {}: < {} or > {} → anomaly",
+                i, SENSOR_NAMES[i], lo, hi
+            );
         }
     }
 }
@@ -328,7 +329,7 @@ fn main() -> ! {
     // RTC controller untuk power management (light sleep saat idle)
     let mut rtc = Rtc::new(peripherals.LPWR);
     let mut idle_cycles: u32 = 0;
-    const IDLE_SLEEP_THRESHOLD: u32 = 3;  // Sleep after 3 idle cycles
+    const IDLE_SLEEP_THRESHOLD: u32 = 3; // Sleep after 3 idle cycles
 
     // ── Boot Header ──────────────────────────────────────────────────────
     println!("====================================================");
@@ -337,9 +338,18 @@ fn main() -> ! {
     println!("  Framework: esp-hal v1.1.1");
     println!("  Concurrency: Mutex<RefCell<T>> + critical_section");
     println!("  Scalability: N-sensor voting (N = {})", N_SENSORS);
-    println!("  Voting Quorum: >= {} of {} (majority)", VOTING_QUORUM, N_SENSORS);
-    println!("  Lockout       : Adaptive (Minor={}ms, Critical={}ms)", LOCKOUT_MINOR_MS, LOCKOUT_CRITICAL_MS);
-    println!("  Power Mgmt    : Light sleep after {} idle cycles", IDLE_SLEEP_THRESHOLD);
+    println!(
+        "  Voting Quorum: >= {} of {} (majority)",
+        VOTING_QUORUM, N_SENSORS
+    );
+    println!(
+        "  Lockout       : Adaptive (Minor={}ms, Critical={}ms)",
+        LOCKOUT_MINOR_MS, LOCKOUT_CRITICAL_MS
+    );
+    println!(
+        "  Power Mgmt    : Light sleep after {} idle cycles",
+        IDLE_SLEEP_THRESHOLD
+    );
     println!("====================================================");
     println!("CONFIG:");
     println!("  Poll Interval  : {} ms", SENSOR_POLL_INTERVAL_MS);
@@ -368,8 +378,8 @@ fn main() -> ! {
         if button_pressed {
             critical_section::with(|cs| {
                 let mut state = STATE.borrow_ref_mut(cs);
-                state.sensor_values[0] = 99;     // Suhu anomali
-                state.sensor_values[2] = 9999;   // Vibrasi anomali
+                state.sensor_values[0] = 99; // Suhu anomali
+                state.sensor_values[2] = 9999; // Vibrasi anomali
             });
         }
 
@@ -389,7 +399,7 @@ fn main() -> ! {
         let transition = current_status != prev_status || button_pressed;
 
         if transition || lockout_remaining > 0 {
-            idle_cycles = 0;  // Reset sleep counter on activity
+            idle_cycles = 0; // Reset sleep counter on activity
             let eval = evaluate_sensor_redundancy(&sensor_values);
 
             if eval.is_fault && lockout_remaining == 0 {
@@ -398,7 +408,13 @@ fn main() -> ! {
                 let lockout_ms = severity.lockout_ms();
 
                 let t_start = timer0.now();
-                update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, true, lockout_ms);
+                update_leds(
+                    &mut valve_led,
+                    &mut normal_led,
+                    &mut lockout_led,
+                    true,
+                    lockout_ms,
+                );
                 let latency_us = t_start.elapsed().as_micros();
 
                 critical_section::with(|cs| {
@@ -413,10 +429,12 @@ fn main() -> ! {
                 }
                 println!(
                     ", {}, FAULT_DETECTED({},{}/{})",
-                    latency_us, severity.label(), eval.anomaly_count, N_SENSORS
+                    latency_us,
+                    severity.label(),
+                    eval.anomaly_count,
+                    N_SENSORS
                 );
                 prev_status = SystemStatus::Fault;
-
             } else if lockout_remaining > 0 {
                 // ── LOCKOUT COUNTDOWN ─────────────────────────────────────
                 let new_remaining = lockout_remaining.saturating_sub(SENSOR_POLL_INTERVAL_MS);
@@ -435,7 +453,13 @@ fn main() -> ! {
                     print_data_row(iteration, &sensor_values, 0, "LOCKOUT_CLEARED");
                     prev_status = SystemStatus::Normal;
                 } else {
-                    update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, true, new_remaining);
+                    update_leds(
+                        &mut valve_led,
+                        &mut normal_led,
+                        &mut lockout_led,
+                        true,
+                        new_remaining,
+                    );
                     if transition {
                         print!("{}", iteration);
                         for i in 0..N_SENSORS {
@@ -445,7 +469,6 @@ fn main() -> ! {
                     }
                     prev_status = SystemStatus::Lockout;
                 }
-
             } else {
                 // ── NORMAL (transition from non-normal → normal) ──────────
                 update_leds(&mut valve_led, &mut normal_led, &mut lockout_led, false, 0);
@@ -460,9 +483,9 @@ fn main() -> ! {
 
             if idle_cycles >= IDLE_SLEEP_THRESHOLD {
                 // Enter light sleep — wake via RTC timer in ~450ms
-                let wake_timer = TimerWakeupSource::new(
-                    core::time::Duration::from_micros((SENSOR_POLL_INTERVAL_MS - 50) as u64 * 1000)
-                );
+                let wake_timer = TimerWakeupSource::new(core::time::Duration::from_micros(
+                    (SENSOR_POLL_INTERVAL_MS - 50) as u64 * 1000,
+                ));
                 println!(". SLEEP {}", iteration);
                 rtc.sleep_light(&[&wake_timer]);
                 // Resumes here after wake — reset idle counter

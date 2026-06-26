@@ -3,10 +3,7 @@
 target = "xtensa-esp32s3-none-elf"
 
 [target.xtensa-esp32s3-none-elf]
-rustflags = [
-    "-C", "link-arg=-nostartfiles",
-    "-C", "link-arg=-Wl,-Tesp32s3_rom.ld",
-]
+# rustflags tidak diperlukan — esp-hal/xtensa-lx-rt handle linker script via build script
 
 [unstable]
 build-std = ["core", "alloc"]
