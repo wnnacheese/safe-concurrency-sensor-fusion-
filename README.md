@@ -101,8 +101,10 @@ The system reads **3 sensors** (temperature, pressure, vibration), evaluates the
 .
 ├── Rust_Simulation/
 │   ├── src/main.rs              # Rust bare-metal (esp-hal 1.1.1)
+│   ├── build.rs                 # Linker script injection (esp32s3)
 │   ├── Cargo.toml               # Dependencies: esp-hal, critical-section
-│   └── .cargo/config.toml       # Linker config for Xtensa target
+│   ├── Cargo.lock               # Pinned dependency versions
+│   └── .cargo/config.toml       # Target & build-std config
 │
 ├── Proteus_Simulation/
 │   ├── main.py                  # MicroPython port (Proteus ESP32-S3 VSM)
@@ -110,25 +112,33 @@ The system reads **3 sensors** (temperature, pressure, vibration), evaluates the
 │
 ├── GNUPLOT/
 │   ├── simulation_data.dat      # CSV data from Proteus debug console
-│   └── plot*.plt                # GNUPlot visualization scripts (5 panels)
+│   ├── plot*.plt                # GNUPlot visualization scripts (5 panels)
+│   └── *.png                    # Generated plots (5 analysis panels)
 │
 ├── python/
 │   └── analyze.py               # Metrics analysis & verification script
 │
 ├── docs/
 │   ├── README_FIRMWARE.md       # Firmware build & deploy guide
-│   ├── architecture_diagram.png # System architecture
-│   └── wiring_reference.png     # Proteus schematic
+│   ├── SIMULASI_MEKANISME.md    # Simulation mechanism documentation
+│   ├── architecture_diagram.png # System architecture diagram
+│   ├── flow.drawio              # Flowchart (draw.io source)
+│   ├── FLOW.png                 # Flowchart (exported)
+│   ├── database_schema.png      # Database schema design
+│   ├── block-diagram.html       # Interactive block diagram
+│   └── *_analysis.png           # GNUPlot analysis outputs
 │
 ├── .github/workflows/
-│   └── ci.yml                   # CI/CD pipeline (check + build + artifact)
+│   └── ci.yml                   # CI/CD: cargo check + build --release
 │
 ├── Laporan/
-│   ├── main.tex                 # LaTeX report (IEEE-style, 25 references)
-│   ├── ETS_PemKom.pdf           # Compiled PDF (23 pages)
+│   ├── main.tex                 # LaTeX report (IEEE-style)
+│   ├── ETS_PemKom.pdf           # Compiled PDF
 │   └── *.png                    # Figures and screenshots
 │
 ├── Jurnal/                      # 25 Scopus/WoS references (2021-2026)
+├── .gitignore                   # Excludes: target/, *.pdf, *.synctex.gz, dll
+├── LICENSE                      # MIT License
 └── README.md                    # This file
 ```
 
