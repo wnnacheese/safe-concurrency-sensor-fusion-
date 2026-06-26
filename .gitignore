@@ -10,8 +10,6 @@ target/
 build_ppt.js
 package.json
 package-lock.json
-Presentasi_ETS_Final.pptx
-dokum.jpeg
 rustup-init.exe
 
 # Proteus artifacts
@@ -25,4 +23,3 @@ Laporan/Presentasi_ETS.md
 Laporan/Naskah_Presentasi.tex
 Laporan/Naskah_Presentasi.pdf
 Laporan/LaporanETS_PemKom.pdf
-Laporan/DB PemKom.png
